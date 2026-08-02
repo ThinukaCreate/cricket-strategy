@@ -1,4 +1,4 @@
-/* Premium Broadcast Sports Dashboard Design System with PIN Security Lock */
+/* Premium Broadcast Sports Dashboard Design System with Full Mobile Optimization & Touch Support */
 
 :root {
   --bg-dark: #0b0f19;
@@ -23,6 +23,7 @@
   padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -46,6 +47,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: opacity 0.35s ease, transform 0.35s ease;
+  padding: 1rem;
 }
 
 .pin-lock-overlay.unlocked {
@@ -58,15 +60,16 @@ body {
   background: rgba(15, 23, 42, 0.95);
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 16px;
-  padding: 2.25rem 2rem;
+  padding: 2rem 1.5rem;
   width: 330px;
+  max-width: 90vw;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.2);
   transition: transform 0.15s ease;
 }
 
 .pin-icon {
-  font-size: 2.75rem;
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
@@ -216,9 +219,9 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 0.725rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.5rem 0.25rem;
+  padding: 0.6rem 0.25rem;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -281,7 +284,7 @@ body {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--panel-border);
   border-radius: 6px;
-  padding: 0.55rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -316,8 +319,8 @@ body {
 
 .toggle-switch {
   position: relative;
-  width: 36px;
-  height: 20px;
+  width: 38px;
+  height: 22px;
 }
 
 .toggle-switch input {
@@ -338,8 +341,8 @@ body {
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
+  height: 16px;
+  width: 16px;
   left: 3px;
   bottom: 3px;
   background-color: white;
@@ -360,7 +363,7 @@ input:checked + .toggle-slider:before {
   background: rgba(56, 189, 248, 0.15);
   border: 1px solid rgba(56, 189, 248, 0.35);
   color: var(--text-main);
-  padding: 0.45rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -371,9 +374,10 @@ input:checked + .toggle-slider:before {
   justify-content: center;
   gap: 0.4rem;
   width: 100%;
+  min-height: 38px;
 }
 
-.btn-action:hover {
+.btn-action:hover, .btn-action:active {
   background: rgba(56, 189, 248, 0.3);
   border-color: var(--accent-sky);
 }
@@ -384,7 +388,7 @@ input:checked + .toggle-slider:before {
   color: #e0f2fe;
 }
 
-.btn-action.green:hover {
+.btn-action.green:hover, .btn-action.green:active {
   background: rgba(56, 189, 248, 0.35);
   border-color: var(--accent-sky);
 }
@@ -411,7 +415,7 @@ input:checked + .toggle-slider:before {
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
   border-radius: 6px;
-  padding: 0.4rem 0.6rem;
+  padding: 0.45rem 0.6rem;
   color: var(--text-main);
   font-size: 0.75rem;
   outline: none;
@@ -428,7 +432,7 @@ input:checked + .toggle-slider:before {
   justify-content: space-between;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--panel-border);
-  padding: 0.35rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   border-radius: 6px;
   margin-bottom: 0.35rem;
 }
@@ -462,7 +466,8 @@ input:checked + .toggle-slider:before {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+  padding: 0.2rem;
 }
 
 /* Right Stage Section - Large Canvas Ground */
@@ -492,27 +497,7 @@ input:checked + .toggle-slider:before {
 #fieldCanvas {
   border-radius: 12px;
   display: block;
-}
-
-.canvas-overlay-controls {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 0.35rem 0.6rem;
-}
-
-.canvas-controls-left {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  touch-action: none; /* Disables browser scrolling over canvas during touch dragging */
 }
 
 .ctrl-btn {
@@ -521,9 +506,10 @@ input:checked + .toggle-slider:before {
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.5rem;
   border-radius: 4px;
   cursor: pointer;
+  min-height: 32px;
 }
 
 .ctrl-btn.active-speed {
@@ -560,4 +546,66 @@ input:checked + .toggle-slider:before {
 .note-box p {
   color: var(--text-muted);
   line-height: 1.3;
+}
+
+/* RESPONSIVE MOBILE & TABLET STYLES (iOS & Android Smartphones) */
+@media (max-width: 900px) {
+  body {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-header {
+    height: auto;
+    padding: 0.6rem 0.85rem;
+    flex-direction: row;
+  }
+
+  .brand-title h1 {
+    font-size: 0.88rem;
+  }
+
+  .brand-title p {
+    font-size: 0.62rem;
+  }
+
+  .header-badges {
+    font-size: 0.65rem;
+  }
+
+  /* Stack canvas ground at the top, sidebar controls below on smartphones! */
+  .app-container {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .stage-section {
+    padding: 0.5rem 0.25rem;
+    height: auto;
+    min-height: auto;
+  }
+
+  .canvas-card {
+    padding: 4px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .sidebar-section {
+    width: 100%;
+    border-right: none;
+    border-top: 1px solid var(--panel-border);
+    height: auto;
+    overflow: visible;
+  }
+
+  .tab-content {
+    height: auto;
+    overflow: visible;
+    padding: 0.6rem;
+  }
 }

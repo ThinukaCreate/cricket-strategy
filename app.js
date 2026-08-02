@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Broadcast TV Grade Cyan, Gold & Pure White Tactical Color System with PIN Authentication (1996)
+// 2D Cricket Field Strategy Animator - Mobile Responsive & Touch Drag Engine (PIN: 1996)
 
 const DEFAULT_SCENARIOS = {
   s1: {
@@ -203,10 +203,12 @@ class CricketAnimator {
   }
 
   initCanvas() {
-    const card = document.getElementById("canvasCard");
-    const rect = card ? card.getBoundingClientRect() : { width: 750, height: 750 };
-    const cssSize = Math.min(rect.width - 20, rect.height - 20);
-    this.displaySize = cssSize > 350 ? cssSize : 620;
+    const isMobile = window.innerWidth <= 900;
+    const availableWidth = isMobile ? (window.innerWidth - 20) : 750;
+    const availableHeight = isMobile ? (window.innerHeight * 0.55) : (window.innerHeight - 80);
+    const cssSize = Math.min(availableWidth, availableHeight);
+    
+    this.displaySize = cssSize > 280 ? cssSize : 320;
 
     this.canvas.width = 1800;
     this.canvas.height = 1800;
@@ -639,13 +641,14 @@ class CricketAnimator {
       };
     });
 
+    // MOUSE DRAG EVENT LISTENERS
     this.canvas.onmousedown = (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const scale = 650 / this.displaySize;
       const mouseX = ((e.clientX - rect.left) - this.displaySize / 2) * scale;
       const mouseY = ((e.clientY - rect.top) - this.displaySize / 2) * scale;
 
-      let hit = this.activePlayers.find(p => Math.hypot(p.x - mouseX, p.y - mouseY) < 22);
+      let hit = this.activePlayers.find(p => Math.hypot(p.x - mouseX, p.y - mouseY) < 26);
       if (hit) {
         this.isDragging = true;
         this.draggedEntity = hit;
@@ -661,57 +664,13 @@ class CricketAnimator {
       const mouseY = ((e.clientY - rect.top) - this.displaySize / 2) * scale;
 
       if (this.isDragging && this.draggedEntity) {
-        const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
-        const maxOutfieldAllowed = sc.maxOutfield || 5;
-
-        const distFromCenter = Math.hypot(mouseX, mouseY);
-        const isTryingOutfield = distFromCenter > 140;
-
-        const currentOutfieldersCount = this.activePlayers.filter(
-          p => p.name !== this.draggedEntity.name && Math.hypot(p.x, p.y) > 140
-        ).length;
-
-        let clampedX = mouseX;
-        let clampedY = mouseY;
-
-        if (isTryingOutfield && currentOutfieldersCount >= maxOutfieldAllowed) {
-          clampedX = (mouseX / distFromCenter) * 138;
-          clampedY = (mouseY / distFromCenter) * 138;
-          this.ruleWarningText = `⚠️ ${sc.phase} Rule: Max ${maxOutfieldAllowed} fielders outside 30yd circle!`;
-        } else {
-          if (distFromCenter > 285) {
-            clampedX = (mouseX / distFromCenter) * 285;
-            clampedY = (mouseY / distFromCenter) * 285;
-          }
-          this.ruleWarningText = null;
-        }
-
-        const newRoleName = this.calculateCricketPositionName(clampedX, clampedY);
-
-        this.draggedEntity.x = clampedX;
-        this.draggedEntity.y = clampedY;
-        this.draggedEntity.targetX = clampedX;
-        this.draggedEntity.targetY = clampedY;
-        this.draggedEntity.role = newRoleName;
-
-        const scP = sc.players.find(p => p.name === this.draggedEntity.name);
-        if (scP) {
-          scP.role = newRoleName;
-          if (this.isLefty && scP.leftyPos) {
-            scP.leftyPos = { x: Math.round(clampedX), y: Math.round(clampedY) };
-          } else if (this.is45Boundary && scP.b45Pos) {
-            scP.b45Pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
-          } else {
-            scP.pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
-          }
-          this.saveScenariosToStorage();
-        }
+        this.handleEntityDrag(mouseX, mouseY);
         return;
       }
 
       let found = null;
       this.activePlayers.forEach(p => {
-        if (Math.hypot(p.x - mouseX, p.y - mouseY) < 20) found = p.name;
+        if (Math.hypot(p.x - mouseX, p.y - mouseY) < 22) found = p.name;
       });
       this.hoveredPlayer = found;
       this.canvas.style.cursor = found ? "grab" : "crosshair";
@@ -725,6 +684,93 @@ class CricketAnimator {
         this.updateScenarioUI();
       }
     };
+
+    // TOUCH DRAG EVENT LISTENERS (iOS & ANDROID SMARTPHONES)
+    const getTouchCoords = (evt) => {
+      const touch = evt.touches[0] || evt.changedTouches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const scale = 650 / this.displaySize;
+      const x = ((touch.clientX - rect.left) - this.displaySize / 2) * scale;
+      const y = ((touch.clientY - rect.top) - this.displaySize / 2) * scale;
+      return { x, y };
+    };
+
+    this.canvas.addEventListener("touchstart", (e) => {
+      const { x: touchX, y: touchY } = getTouchCoords(e);
+      let hit = this.activePlayers.find(p => Math.hypot(p.x - touchX, p.y - touchY) < 30);
+      if (hit) {
+        e.preventDefault();
+        this.isDragging = true;
+        this.draggedEntity = hit;
+        this.selectedPlayer = hit.name;
+        this.updateScenarioUI();
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener("touchmove", (e) => {
+      if (this.isDragging && this.draggedEntity) {
+        e.preventDefault();
+        const { x: touchX, y: touchY } = getTouchCoords(e);
+        this.handleEntityDrag(touchX, touchY);
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener("touchend", () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+        this.draggedEntity = null;
+        this.ruleWarningText = null;
+        this.updateScenarioUI();
+      }
+    });
+  }
+
+  handleEntityDrag(targetX, targetY) {
+    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
+    const maxOutfieldAllowed = sc.maxOutfield || 5;
+
+    const distFromCenter = Math.hypot(targetX, targetY);
+    const isTryingOutfield = distFromCenter > 140;
+
+    const currentOutfieldersCount = this.activePlayers.filter(
+      p => p.name !== this.draggedEntity.name && Math.hypot(p.x, p.y) > 140
+    ).length;
+
+    let clampedX = targetX;
+    let clampedY = targetY;
+
+    if (isTryingOutfield && currentOutfieldersCount >= maxOutfieldAllowed) {
+      clampedX = (targetX / distFromCenter) * 138;
+      clampedY = (targetY / distFromCenter) * 138;
+      this.ruleWarningText = `⚠️ ${sc.phase} Rule: Max ${maxOutfieldAllowed} fielders outside 30yd circle!`;
+    } else {
+      if (distFromCenter > 285) {
+        clampedX = (targetX / distFromCenter) * 285;
+        clampedY = (targetY / distFromCenter) * 285;
+      }
+      this.ruleWarningText = null;
+    }
+
+    const newRoleName = this.calculateCricketPositionName(clampedX, clampedY);
+
+    this.draggedEntity.x = clampedX;
+    this.draggedEntity.y = clampedY;
+    this.draggedEntity.targetX = clampedX;
+    this.draggedEntity.targetY = clampedY;
+    this.draggedEntity.role = newRoleName;
+
+    const scP = sc.players.find(p => p.name === this.draggedEntity.name);
+    if (scP) {
+      scP.role = newRoleName;
+      if (this.isLefty && scP.leftyPos) {
+        scP.leftyPos = { x: Math.round(clampedX), y: Math.round(clampedY) };
+      } else if (this.is45Boundary && scP.b45Pos) {
+        scP.b45Pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
+      } else {
+        scP.pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
+      }
+      this.saveScenariosToStorage();
+    }
   }
 
   triggerBallSimulation() {
