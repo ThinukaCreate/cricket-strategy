@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Clean Turf without Center Blue Light & without Batsman Crease Badge
+// 2D Cricket Field Strategy Animator - Broadcast TV Grade Cyan, Gold & Pure White Tactical Color System with PIN Authentication (1996)
 
 const DEFAULT_SCENARIOS = {
   s1: {
@@ -131,11 +131,58 @@ class CricketAnimator {
     this.isBallAnimating = false;
     this.ballSimTime = 0;
 
+    this.initPinLock();
     this.initCanvas();
     this.initScenarios();
     this.bindEvents();
     this.updateScenarioUI();
     this.requestFrame();
+  }
+
+  initPinLock() {
+    const overlay = document.getElementById("pinLockOverlay");
+    const pinInput = document.getElementById("pinInput");
+    const submitBtn = document.getElementById("pinSubmitBtn");
+    const errorMsg = document.getElementById("pinErrorMsg");
+
+    if (sessionStorage.getItem("cricket_pin_unlocked") === "true") {
+      if (overlay) overlay.style.display = "none";
+      return;
+    }
+
+    const checkPin = () => {
+      const entered = pinInput.value.trim();
+      if (entered === "1996") {
+        sessionStorage.setItem("cricket_pin_unlocked", "true");
+        if (overlay) {
+          overlay.classList.add("unlocked");
+          setTimeout(() => {
+            overlay.style.display = "none";
+          }, 350);
+        }
+      } else {
+        if (errorMsg) errorMsg.style.display = "block";
+        pinInput.value = "";
+        pinInput.focus();
+
+        const card = document.querySelector(".pin-card");
+        if (card) {
+          card.style.transform = "translateX(-10px)";
+          setTimeout(() => card.style.transform = "translateX(10px)", 80);
+          setTimeout(() => card.style.transform = "translateX(-6px)", 160);
+          setTimeout(() => card.style.transform = "translateX(0)", 240);
+        }
+      }
+    };
+
+    if (submitBtn) submitBtn.onclick = checkPin;
+    if (pinInput) {
+      pinInput.onkeyup = (e) => {
+        if (e.key === "Enter" || pinInput.value.length === 4) {
+          checkPin();
+        }
+      };
+    }
   }
 
   loadScenariosFromStorage() {
@@ -341,7 +388,7 @@ class CricketAnimator {
         btn.style.justifyContent = "space-between";
         
         btn.innerHTML = `
-          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px;">${item.title}</span>
+          <span style="white-space:normal; word-break:break-word; flex:1; padding-right:0.4rem;">${item.title}</span>
           ${item.isCustom ? `<button class="btn-icon-small" data-del="${key}" style="color:#fb7185; padding:0 0.2rem;">🗑️</button>` : ''}
         `;
 
@@ -746,7 +793,7 @@ class CricketAnimator {
     const outfieldRadius = 290;
     const innerRadius = 140;
 
-    // Plain Natural Green Grass Turf Background (NO CENTER BLUE LIGHT)
+    // Plain Natural Green Grass Turf Background
     const grassGrad = ctx.createRadialGradient(0, 0, 40, 0, 0, outfieldRadius);
     grassGrad.addColorStop(0, "#057857");
     grassGrad.addColorStop(0.7, "#045e45");
@@ -851,8 +898,6 @@ class CricketAnimator {
     ctx.fillStyle = "#fef08a";
     ctx.fillRect(-6, -pH / 2 + 4, 12, 3);
     ctx.fillRect(-6, pH / 2 - 7, 12, 3);
-
-    // REMOVED BATSMAN STANCE BADGE OVER CREASE (NO MORE BATSMAN TEXT OVERLAY ON PITCH)
 
     // Bowler Arrow
     ctx.strokeStyle = "#38bdf8";
