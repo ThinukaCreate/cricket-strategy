@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Streamlined UI with Save PNG Only
+// 2D Cricket Field Strategy Animator - Robust Canvas Sizing for Desktop & Mobile (PIN: 1996)
 
 const DEFAULT_SCENARIOS = {
   s1: {
@@ -204,11 +204,20 @@ class CricketAnimator {
 
   initCanvas() {
     const isMobile = window.innerWidth <= 900;
-    const availableWidth = isMobile ? (window.innerWidth - 20) : 750;
-    const availableHeight = isMobile ? (window.innerHeight * 0.55) : (window.innerHeight - 80);
-    const cssSize = Math.min(availableWidth, availableHeight);
-    
-    this.displaySize = cssSize > 280 ? cssSize : 320;
+    let availableSize = 620;
+
+    if (isMobile) {
+      const w = window.innerWidth - 24;
+      const h = window.innerHeight * 0.55;
+      availableSize = Math.min(w, h);
+    } else {
+      const stage = document.querySelector(".stage-section");
+      const stageW = stage ? (stage.clientWidth - 40) : (window.innerWidth - 380);
+      const stageH = window.innerHeight - 80;
+      availableSize = Math.min(stageW, stageH);
+    }
+
+    this.displaySize = Math.max(340, availableSize || 620);
 
     this.canvas.width = 1800;
     this.canvas.height = 1800;
@@ -501,7 +510,8 @@ class CricketAnimator {
   }
 
   bindEvents() {
-    window.onresize = () => this.initCanvas();
+    window.addEventListener("resize", () => this.initCanvas());
+    window.addEventListener("load", () => this.initCanvas());
 
     const tabOptionsBtn = document.getElementById("tabOptionsBtn");
     const tabFieldersBtn = document.getElementById("tabFieldersBtn");
@@ -582,71 +592,10 @@ class CricketAnimator {
       };
     }
 
-    const playBallBtn = document.getElementById("playBallBtn");
-    if (playBallBtn) {
-      playBallBtn.onclick = () => this.triggerBallSimulation();
-    }
-
     const exportPngBtn = document.getElementById("exportPngBtn");
     if (exportPngBtn) {
       exportPngBtn.onclick = () => this.exportPNG();
     }
-
-    const exportJsonBtn = document.getElementById("exportJsonBtn");
-    if (exportJsonBtn) {
-      exportJsonBtn.onclick = () => this.exportJSON();
-    }
-
-    const importFileInput = document.getElementById("importFileInput");
-    if (importFileInput) {
-      importFileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (evt) => {
-            try {
-              const loaded = JSON.parse(evt.target.result);
-              if (loaded.s1 && loaded.s2) {
-                this.scenarios = loaded;
-                this.saveScenariosToStorage();
-                this.switchScenario(this.currentScenarioKey);
-                alert("Strategy file imported successfully!");
-              }
-            } catch (err) {
-              alert("Invalid JSON strategy file format.");
-            }
-          };
-          reader.readAsText(file);
-        }
-      };
-    }
-
-    const resetBtn = document.getElementById("resetBtn");
-    if (resetBtn) {
-      resetBtn.onclick = () => {
-        if (confirm("Reset all field positions to original PDF defaults?")) {
-          this.scenarios = JSON.parse(JSON.stringify(DEFAULT_SCENARIOS));
-          localStorage.removeItem("cricket_scenarios_v1");
-          this.switchScenario("s1");
-        }
-      };
-    }
-
-    document.querySelectorAll("[data-speed]").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll("[data-speed]").forEach(b => {
-          b.style.color = "var(--text-muted)";
-          b.classList.remove("active-speed");
-        });
-        btn.style.color = "var(--accent-sky)";
-        btn.classList.add("active-speed");
-
-        const val = parseFloat(btn.dataset.speed);
-        if (val === 0.25) this.animSpeed = 0.018;
-        else if (val === 0.5) this.animSpeed = 0.04;
-        else if (val === 1.0) this.animSpeed = 0.08;
-      };
-    });
 
     // MOUSE DRAG EVENT LISTENERS
     this.canvas.onmousedown = (e) => {
@@ -780,25 +729,12 @@ class CricketAnimator {
     }
   }
 
-  triggerBallSimulation() {
-    this.isBallAnimating = true;
-    this.ballSimTime = 0;
-  }
-
   exportPNG() {
     this.draw(true);
     const dataURL = this.canvas.toDataURL("image/png");
     const link = document.createElement("a");
     link.download = `Cricket_Field_Plan_${this.currentScenarioKey}_${Date.now()}.png`;
     link.href = dataURL;
-    link.click();
-  }
-
-  exportJSON() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.scenarios, null, 2));
-    const link = document.createElement("a");
-    link.download = `Cricket_Team_Strategy_${Date.now()}.json`;
-    link.href = dataStr;
     link.click();
   }
 
@@ -821,14 +757,6 @@ class CricketAnimator {
 
       this.activeWK.x += (this.activeWK.targetX - this.activeWK.x) * speed;
       this.activeWK.y += (this.activeWK.targetY - this.activeWK.y) * speed;
-    }
-
-    if (this.isBallAnimating) {
-      this.ballSimTime += 0.012;
-      if (this.ballSimTime > 1) {
-        this.isBallAnimating = false;
-        this.ballSimTime = 0;
-      }
     }
   }
 
@@ -975,45 +903,6 @@ class CricketAnimator {
       ctx.lineTo(0, -pH / 2 + 25);
       ctx.lineTo(6, -pH / 2 + 35);
       ctx.fill();
-    }
-
-    // Ball Delivery Simulation
-    if (this.isBallAnimating) {
-      const t = this.ballSimTime;
-      const startY = this.bowlerDir === "down" ? -pH / 2 + 20 : pH / 2 - 20;
-      const strikerCreaseY = this.bowlerDir === "down" ? pH / 2 - 20 : -pH / 2 + 20;
-
-      let ballX = 0;
-      let ballY = startY;
-
-      if (t < 0.45) {
-        const subT = t / 0.45;
-        ballY = startY + (strikerCreaseY - startY) * subT;
-        ballX = Math.sin(subT * Math.PI) * 4;
-      } else {
-        const subT = (t - 0.45) / 0.55;
-        const shotAngle = isOffSideOnRight ? 0.6 : -0.6;
-        const shotDist = subT * 260;
-        ballX = Math.sin(shotAngle) * shotDist;
-        ballY = strikerCreaseY + Math.cos(shotAngle) * (this.bowlerDir === "down" ? -shotDist : shotDist);
-      }
-
-      ctx.beginPath();
-      ctx.arc(ballX + 3, ballY + 4, 5, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(0,0,0,0.35)";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(ballX, ballY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = "#ef4444";
-      ctx.shadowColor = "#ef4444";
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      ctx.strokeStyle = "white";
-      ctx.lineWidth = 1;
-      ctx.stroke();
     }
 
     // Badges for Bowler & WK
