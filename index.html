@@ -42,7 +42,7 @@
       <div class="brand-icon">🏏</div>
       <div class="brand-title">
         <h1>Cricket Strategy Studio</h1>
-        <p>Tactical Field Placement & Match Simulator</p>
+        <p>Tactical Field Placement Simulator</p>
       </div>
     </div>
     
@@ -118,25 +118,10 @@
           <button class="btn-action green" id="submitCustomScBtn">Save Custom Scenario</button>
         </div>
 
-        <!-- Current Match Overview -->
-        <div class="section-box">
-          <div class="box-title">
-            <span>🎯 Current Match State</span>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:0.25rem;">
-            <div style="font-size:0.8rem; font-weight:700; color:var(--text-main)" id="scTitle">Loading...</div>
-            <div style="display:flex; gap:0.5rem; font-size:0.7rem; color:var(--text-muted)">
-              <span id="scPhase">Phase</span>
-              <span>•</span>
-              <span id="scBowlerInfo">Bowler</span>
-            </div>
-          </div>
-        </div>
-
         <!-- Match Rules & Toggles Stack -->
         <div class="section-box">
           <div class="box-title">
-            <span>⚖️ Tactical Rules & Rules Engine</span>
+            <span>⚖️ Tactical Rules & Engine</span>
           </div>
           <div class="toggles-stack">
             <div class="toggle-item">
@@ -156,50 +141,11 @@
           </div>
         </div>
 
-        <!-- Movement Animation Speed Control -->
-        <div class="section-box">
-          <div class="box-title">
-            <span>⚡ Movement Animation Speed</span>
-          </div>
-          <div style="display: flex; gap: 0.35rem;">
-            <button class="ctrl-btn active-speed" data-speed="0.25" style="flex:1;">0.25x (Slow)</button>
-            <button class="ctrl-btn" data-speed="0.5" style="flex:1;">0.5x</button>
-            <button class="ctrl-btn" data-speed="1.0" style="flex:1;">1x</button>
-          </div>
-        </div>
-
-        <!-- Interactive Tactical Notes -->
-        <div class="section-box">
-          <div class="box-title">
-            <span>📝 Tactical Directives</span>
-          </div>
-          <div class="tactical-notes" id="tacticalNotes">
-            <!-- Populated via JS -->
-          </div>
-        </div>
-
-        <!-- Action Controls -->
+        <!-- Single Action Control: Save PNG -->
         <div class="section-box" style="margin-top:auto;">
-          <button class="btn-action green" id="playBallBtn">
-            <span>🏏 Play Ball & Stroke Simulation</span>
+          <button class="btn-action green" id="exportPngBtn" style="padding:0.75rem 1rem; font-size:0.85rem; font-weight:700;">
+            <span>📷 Save PNG Image</span>
           </button>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem; margin-top:0.4rem;">
-            <button class="btn-action" id="exportPngBtn">
-              <span>📷 Save PNG</span>
-            </button>
-            <button class="btn-action" id="exportJsonBtn">
-              <span>💾 Export JSON</span>
-            </button>
-          </div>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem; margin-top:0.4rem;">
-            <label class="btn-action" style="cursor:pointer; text-align:center;">
-              <span>📂 Import JSON</span>
-              <input type="file" id="importFileInput" accept=".json" style="display:none;">
-            </label>
-            <button class="btn-action rose" id="resetBtn">
-              <span>↺ Reset PDF</span>
-            </button>
-          </div>
         </div>
 
       </div>

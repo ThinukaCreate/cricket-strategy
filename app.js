@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Mobile Responsive & Touch Drag Engine (PIN: 1996)
+// 2D Cricket Field Strategy Animator - Streamlined UI with Save PNG Only
 
 const DEFAULT_SCENARIOS = {
   s1: {
@@ -409,18 +409,25 @@ class CricketAnimator {
       });
     }
 
-    document.getElementById("scTitle").textContent = sc.title;
-    document.getElementById("scPhase").textContent = sc.phase;
-    document.getElementById("scBowlerInfo").textContent = `Bowler: ${sc.bowler}`;
+    const scTitle = document.getElementById("scTitle");
+    if (scTitle) scTitle.textContent = sc.title;
+
+    const scPhase = document.getElementById("scPhase");
+    if (scPhase) scPhase.textContent = sc.phase;
+
+    const scBowlerInfo = document.getElementById("scBowlerInfo");
+    if (scBowlerInfo) scBowlerInfo.textContent = `Bowler: ${sc.bowler}`;
 
     const notesContainer = document.getElementById("tacticalNotes");
-    notesContainer.innerHTML = "";
-    sc.notes.forEach((note, idx) => {
-      const box = document.createElement("div");
-      box.className = `note-box ${idx === 1 ? 'amber' : 'blue'}`;
-      box.innerHTML = `<h4>Note ${idx + 1}</h4><p>${note}</p>`;
-      notesContainer.appendChild(box);
-    });
+    if (notesContainer) {
+      notesContainer.innerHTML = "";
+      sc.notes.forEach((note, idx) => {
+        const box = document.createElement("div");
+        box.className = `note-box ${idx === 1 ? 'amber' : 'blue'}`;
+        box.innerHTML = `<h4>Note ${idx + 1}</h4><p>${note}</p>`;
+        notesContainer.appendChild(box);
+      });
+    }
 
     const editableRoster = document.getElementById("editableRosterList");
     const countLabel = document.getElementById("fielderCountLabel");
