@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2D Cricket Field Strategy Animator</title>
+  
+  <!-- Modern Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">🏏</div>
+      <div class="brand-title">
+        <h1>Cricket Strategy Studio</h1>
+        <p>Tactical Field Placement & Match Simulator</p>
+      </div>
+    </div>
+    
+    <div class="header-badges">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>4K High Resolution Canvas</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Master Main App Grid -->
+  <main class="app-container">
+    
+    <!-- Left Sidebar: 2-Tab Navigation (Tactical Options / Roster & Fielders) -->
+    <aside class="sidebar-section">
+      
+      <div class="sidebar-nav-tabs">
+        <button class="nav-tab-btn active" id="tabOptionsBtn">
+          <span>⚙️ Tactical Options</span>
+        </button>
+        <button class="nav-tab-btn" id="tabFieldersBtn">
+          <span>👥 Fielders Roster</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: TACTICAL OPTIONS & SCENARIOS -->
+      <div class="tab-content active" id="tabOptions">
+        
+        <!-- Preset Match Scenarios -->
+        <div class="section-box">
+          <div class="box-title">
+            <span>📋 Match Scenarios</span>
+            <button class="btn-icon-small" id="createScenarioBtn" title="Create Custom Scenario">➕ New</button>
+          </div>
+          <div class="scenario-grid" id="scenarioGrid">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Custom Scenario Form (Hidden by Default) -->
+        <div class="section-box" id="customScenarioForm" style="display: none; background: rgba(30, 41, 59, 0.7); border-color: var(--accent-sky);">
+          <div class="box-title">
+            <span>✨ Create Custom Strategy</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Scenario Name</label>
+            <input type="text" class="form-input" id="scNameInput" placeholder="e.g. Death Overs - Lefty">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Match Phase</label>
+            <select class="form-input" id="scPhaseInput">
+              <option value="Power Play">Power Play (Max 2 Outside)</option>
+              <option value="After Power Play">After Power Play (Max 5 Outside)</option>
+              <option value="Death Overs">Death Overs (Max 5 Outside)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bowler Name</label>
+            <input type="text" class="form-input" id="scBowlerInput" value="Bowler">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bowling Direction</label>
+            <select class="form-input" id="scDirInput">
+              <option value="down">Bowling Down (Top to Bottom)</option>
+              <option value="up">Bowling Up (Bottom to Top)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tactical Note</label>
+            <input type="text" class="form-input" id="scNoteInput" placeholder="Tactical instructions for team">
+          </div>
+          <button class="btn-action green" id="submitCustomScBtn">Save Custom Scenario</button>
+        </div>
+
+        <!-- Current Match Overview -->
+        <div class="section-box">
+          <div class="box-title">
+            <span>🎯 Current Match State</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.25rem;">
+            <div style="font-size:0.8rem; font-weight:700; color:var(--text-main)" id="scTitle">Loading...</div>
+            <div style="display:flex; gap:0.5rem; font-size:0.7rem; color:var(--text-muted)">
+              <span id="scPhase">Phase</span>
+              <span>•</span>
+              <span id="scBowlerInfo">Bowler</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Match Rules & Toggles Stack -->
+        <div class="section-box">
+          <div class="box-title">
+            <span>⚖️ Tactical Rules & Rules Engine</span>
+          </div>
+          <div class="toggles-stack">
+            <div class="toggle-item">
+              <span>Lefty Batsman Rule</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="leftyToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <span>Send 45's to Boundary</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="b45Toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Movement Animation Speed Control (Moved from overlay) -->
+        <div class="section-box">
+          <div class="box-title">
+            <span>⚡ Movement Animation Speed</span>
+          </div>
+          <div style="display: flex; gap: 0.35rem;">
+            <button class="ctrl-btn active-speed" data-speed="0.25" style="flex:1;">0.25x (Slow)</button>
+            <button class="ctrl-btn" data-speed="0.5" style="flex:1;">0.5x</button>
+            <button class="ctrl-btn" data-speed="1.0" style="flex:1;">1x</button>
+          </div>
+        </div>
+
+        <!-- Interactive Tactical Notes -->
+        <div class="section-box">
+          <div class="box-title">
+            <span>📝 Tactical Directives</span>
+          </div>
+          <div class="tactical-notes" id="tacticalNotes">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="section-box" style="margin-top:auto;">
+          <button class="btn-action green" id="playBallBtn">
+            <span>🏏 Play Ball & Stroke Simulation</span>
+          </button>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem; margin-top:0.4rem;">
+            <button class="btn-action" id="exportPngBtn">
+              <span>📷 Save PNG</span>
+            </button>
+            <button class="btn-action" id="exportJsonBtn">
+              <span>💾 Export JSON</span>
+            </button>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.4rem; margin-top:0.4rem;">
+            <label class="btn-action" style="cursor:pointer; text-align:center;">
+              <span>📂 Import JSON</span>
+              <input type="file" id="importFileInput" accept=".json" style="display:none;">
+            </label>
+            <button class="btn-action rose" id="resetBtn">
+              <span>↺ Reset PDF</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: FIELDERS ROSTER & EDITING -->
+      <div class="tab-content" id="tabFielders">
+        
+        <div class="section-box">
+          <div class="box-title">
+            <span>➕ Add New Fielder</span>
+          </div>
+          <div style="display:flex; gap:0.4rem;">
+            <input type="text" class="form-input" id="newPlayerNameInput" placeholder="Player Name" style="flex:1;">
+            <button class="btn-action green" id="addPlayerBtn" style="width:auto; padding:0 0.75rem;">Add</button>
+          </div>
+        </div>
+
+        <div class="section-box" style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+          <div class="box-title">
+            <span>📋 Active Field Roster</span>
+            <span style="font-size:0.65rem; color:var(--text-muted);" id="fielderCountLabel">9 Fielders</span>
+          </div>
+          <div style="overflow-y:auto; flex:1; padding-right:0.2rem;" id="editableRosterList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- Right Stage: Unobscured 4K Ground Canvas -->
+    <section class="stage-section">
+      <div class="canvas-card" id="canvasCard">
+        <canvas id="fieldCanvas"></canvas>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
