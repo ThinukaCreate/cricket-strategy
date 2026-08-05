@@ -117,7 +117,7 @@ class CricketAnimator {
 
     // 2) Firebase Cloud Realtime Database Initialization (Cloud Master State)
     const firebaseConfig = {
-      databaseURL: "https://cricket-strategy-2026-default-rtdb.firebaseio.com"
+      databaseURL: "https://cricket-9854b-default-rtdb.firebaseio.com"
     };
 
     if (window.firebase && !window.firebase.apps.length) {
