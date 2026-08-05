@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Enhanced Real-Time Broadcast Sync Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Pure Icon-Only Badge Header Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -112,7 +112,6 @@ class CricketAnimator {
       console.warn("SSE Realtime Stream initialized:", e);
     }
 
-    // High frequency poll fallback for mobile devices
     setInterval(() => {
       if (!this.isDragging) {
         this.fetchCloudState();
@@ -142,8 +141,8 @@ class CricketAnimator {
   applySnapshotData(val) {
     if (!val || typeof val !== "object") return;
     
-    // Ignore stale echo broadcasts on Admin device
-    if (val.updatedAt && val.updatedAt <= this.lastSyncTimestamp && this.userRole === "admin") {
+    // Strict Timestamp Check: Never revert local toggle if cloud message is older or equal!
+    if (val.updatedAt && val.updatedAt <= this.lastSyncTimestamp) {
       return;
     }
 
@@ -271,26 +270,40 @@ class CricketAnimator {
     }
   }
 
+  // Update Role Access & Navigation UI (Pure Icon Badges with Tooltips!)
   updateRoleUI() {
     const roleBadge = document.getElementById("roleBadge");
     const roleBadgeText = document.getElementById("roleBadgeText");
     const scenarioAdminControls = document.getElementById("scenarioAdminControls");
     const addPlayerSection = document.getElementById("addPlayerSection");
+    const tabFieldersBtn = document.getElementById("tabFieldersBtn");
+    const tabOptionsBtn = document.getElementById("tabOptionsBtn");
+    const tabOptions = document.getElementById("tabOptions");
+    const tabFielders = document.getElementById("tabFielders");
 
     if (this.userRole === "admin") {
       if (roleBadge) {
         roleBadge.className = "badge";
+        roleBadge.title = "👑 Captain Admin Mode (Full Access)";
       }
-      if (roleBadgeText) roleBadgeText.textContent = "👑 Captain Admin";
+      if (roleBadgeText) roleBadgeText.textContent = "👑";
       if (scenarioAdminControls) scenarioAdminControls.style.display = "flex";
       if (addPlayerSection) addPlayerSection.style.display = "flex";
+      if (tabFieldersBtn) tabFieldersBtn.style.display = "flex";
     } else {
       if (roleBadge) {
         roleBadge.className = "badge viewer-badge";
+        roleBadge.title = "👁️ Viewer Mode (Read Only)";
       }
-      if (roleBadgeText) roleBadgeText.textContent = "👁️ Viewer Mode (Read Only)";
+      if (roleBadgeText) roleBadgeText.textContent = "👁️";
       if (scenarioAdminControls) scenarioAdminControls.style.display = "none";
       if (addPlayerSection) addPlayerSection.style.display = "none";
+
+      if (tabFieldersBtn) tabFieldersBtn.style.display = "none";
+
+      if (tabOptionsBtn) tabOptionsBtn.classList.add("active");
+      if (tabOptions) tabOptions.classList.add("active");
+      if (tabFielders) tabFielders.classList.remove("active");
     }
   }
 
@@ -607,7 +620,6 @@ class CricketAnimator {
     }
   }
 
-  // Complete Target & Entity Sync for Active Bowler, WK, BowlerDir & Players!
   updateTargets() {
     const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
     if (!sc) return;
@@ -841,10 +853,12 @@ class CricketAnimator {
       };
     }
 
+    // Lefty Toggle Handler with Timestamp Lock (Prevents Auto-Off bug!)
     const leftyToggle = document.getElementById("leftyToggle");
     if (leftyToggle) {
       leftyToggle.onchange = (e) => {
         this.isLefty = e.target.checked;
+        this.lastSyncTimestamp = Date.now(); // Mark local action timestamp!
         this.updateTargets();
         this.broadcastLiveState();
       };

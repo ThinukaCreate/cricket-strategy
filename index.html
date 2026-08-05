@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=5">
 
   <!-- Firebase Realtime Cloud Sync CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  <!-- Top Navigation Header -->
+  <!-- Top Navigation Header with Sleek Icon-Only Badges -->
   <header class="app-header">
     <div class="brand">
       <div class="brand-icon">🏏</div>
@@ -51,20 +51,19 @@
     </div>
     
     <div class="header-badges">
-      <!-- Live Cloud Sync Indicator -->
-      <div class="badge sync-badge" id="syncStatusBadge">
-        <span class="badge-dot pulse-dot"></span>
-        <span id="syncStatusText">🟢 Live Cloud Sync</span>
+      <!-- Live Cloud Sync Indicator (Icon Only) -->
+      <div class="badge sync-badge" id="syncStatusBadge" title="🟢 Live Cloud Sync Active">
+        <span id="syncStatusText">🟢</span>
       </div>
 
-      <!-- Role Badge & Switch Role Button -->
-      <div class="badge" id="roleBadge">
-        <span class="badge-dot"></span>
-        <span id="roleBadgeText">👑 Captain Admin</span>
+      <!-- Role Indicator Badge (Icon Only) -->
+      <div class="badge" id="roleBadge" title="Current Access Role">
+        <span id="roleBadgeText">👑</span>
       </div>
 
-      <button class="btn-switch-role" id="switchRoleBtn" title="Switch Access PIN Mode">
-        🔑 Switch Role
+      <!-- Switch Role PIN Button (Icon Only) -->
+      <button class="btn-switch-role" id="switchRoleBtn" title="🔑 Switch Access Role PIN">
+        🔑
       </button>
     </div>
   </header>
@@ -145,22 +144,6 @@
           </div>
         </div>
 
-        <!-- Clean Active Match Controls Stack -->
-        <div class="section-box">
-          <div class="box-title">
-            <span>⚖️ Active Match Controls</span>
-          </div>
-          <div class="toggles-stack">
-            <div class="toggle-item">
-              <span>Lefty Batsman Rule</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="leftyToggle">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
         <!-- Single Action Control: Save PNG -->
         <div class="section-box" style="margin-top:auto;">
           <button class="btn-action green" id="exportPngBtn" style="padding:0.75rem 1rem; font-size:0.85rem; font-weight:700;">
@@ -170,7 +153,7 @@
 
       </div>
 
-      <!-- TAB 2: FIELDERS ROSTER & EDITING -->
+      <!-- TAB 2: FIELDERS ROSTER & EDITING (Only for Captain Admin) -->
       <div class="tab-content" id="tabFielders">
         
         <div class="section-box" id="addPlayerSection">
@@ -197,9 +180,21 @@
 
     </aside>
 
-    <!-- Right Stage: Unobscured 4K Ground Canvas -->
+    <!-- Right Stage: Unobscured Ground Canvas with Frozen Lefty Toggle Bar -->
     <section class="stage-section">
       <div class="canvas-card" id="canvasCard">
+        
+        <!-- FROZEN FLOATING LEFTY TOGGLE BAR -->
+        <div class="frozen-lefty-bar">
+          <div class="lefty-bar-content">
+            <span>🏏 Lefty Batsman Rule</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="leftyToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
         <canvas id="fieldCanvas"></canvas>
       </div>
     </section>
@@ -207,6 +202,6 @@
   </main>
 
   <!-- Application Logic with cache-busting query parameter -->
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
