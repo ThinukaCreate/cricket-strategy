@@ -221,7 +221,8 @@ class CricketAnimator {
 
     this.isRemoteUpdate = true;
 
-    if (val.scenarios && typeof val.scenarios === "object") {
+    // Extract full scenarios dictionary from incoming Firebase snapshot & update local state / UI
+    if (val.scenarios && typeof val.scenarios === "object" && Object.keys(val.scenarios).length > 0) {
       this.scenarios = val.scenarios;
       try {
         localStorage.setItem("cricket_scenarios_v1", JSON.stringify(this.scenarios));
@@ -247,6 +248,7 @@ class CricketAnimator {
 
     this.syncVersion = (this.syncVersion || 0) + 1;
 
+    // Payload includes full list of saved scenarios
     const payload = {
       scenarios: this.scenarios,
       currentKey: this.currentScenarioKey,
@@ -255,20 +257,21 @@ class CricketAnimator {
       updatedAt: Date.now()
     };
 
-    // 1) Local Broadcast (Tab-to-tab / window-to-window)
+    // 1) Local Storage & Broadcast (Tab-to-tab / window-to-window)
     try {
-      if (this.bc) this.bc.postMessage(payload);
+      localStorage.setItem("cricket_scenarios_v1", JSON.stringify(this.scenarios));
       localStorage.setItem("cricket_live_broadcast_state", JSON.stringify(payload));
+      if (this.bc) this.bc.postMessage(payload);
     } catch (e) {}
 
-    // 2) Firebase Cloud Realtime Push
+    // 2) Firebase Cloud Realtime Push (Instantly saves new scenarios to database)
     try {
       if (this.dbRef) {
-        this.dbRef.set(payload);
+        this.dbRef.set(payload).catch(err => console.warn("Firebase save error:", err));
       }
     } catch (e) {}
 
-    // 3) HTTP SSE Cloud Broadcast
+    // 3) HTTP SSE Cloud Broadcast Fallback
     if (this.broadcastTimer) clearTimeout(this.broadcastTimer);
     this.broadcastTimer = setTimeout(() => {
       fetch(this.pubUrl, {
