@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Guaranteed Zero-Config Live Real-Time Cloud Sync (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Single Default Scenario Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -20,7 +20,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 const DEFAULT_SCENARIOS = {
   s1: {
     id: 1,
-    title: "1) Power Play - Righty (Bowling Down)",
+    title: "1) Scenario 1 - Power Play (Bowling Down)",
     phase: "Power Play",
     maxOutfield: 2,
     bowler: "KN",
@@ -28,7 +28,7 @@ const DEFAULT_SCENARIOS = {
     bowlerDir: "down",
     wk: { name: "WK", pos: { x: 0, y: 70 } },
     notes: [
-      "Lefty Rule: Deep Leg moves to 30yd circle, Cover moves to boundary.",
+      "Lefty Rule: Position adjustments apply only when Captain drags fielders.",
       "Outgoing bowler covers position of the next bowler."
     ],
     players: [
@@ -36,86 +36,11 @@ const DEFAULT_SCENARIOS = {
       { name: "Shirly", role: "Mid on", pos: { x: -45, y: -110 }, defaultPos: { x: -45, y: -110 } },
       { name: "Wycliff", role: "Mid off", pos: { x: 55, y: -110 }, defaultPos: { x: 55, y: -110 } },
       { name: "Ali R", role: "Mid W", pos: { x: -110, y: -45 }, defaultPos: { x: -110, y: -45 } },
-      { name: "Deepal", role: "Cover", pos: { x: 110, y: 0 }, defaultPos: { x: 110, y: 0 }, leftyPos: { x: 260, y: 0 } },
-      { name: "Chathura", role: "Deep leg", pos: { x: -260, y: 20 }, defaultPos: { x: -260, y: 20 }, leftyPos: { x: -115, y: 20 } },
+      { name: "Deepal", role: "Cover", pos: { x: 110, y: 0 }, defaultPos: { x: 110, y: 0 } },
+      { name: "Chathura", role: "Deep leg", pos: { x: -260, y: 20 }, defaultPos: { x: -260, y: 20 } },
       { name: "Rimash", role: "SQL", pos: { x: -110, y: 70 }, defaultPos: { x: -110, y: 70 } },
       { name: "Isuru", role: "Point", pos: { x: 110, y: 70 }, defaultPos: { x: 110, y: 70 } },
-      { name: "Achala", role: "Gully", pos: { x: 65, y: 115 }, defaultPos: { x: 65, y: 115 }, leftyPos: { x: 40, y: 125 } }
-    ]
-  },
-  s2: {
-    id: 2,
-    title: "2) Power Play - Righty (Bowling Up)",
-    phase: "Power Play",
-    maxOutfield: 2,
-    bowler: "B2",
-    bowlerPos: { x: 0, y: 60 },
-    bowlerDir: "up",
-    wk: { name: "WK", pos: { x: 0, y: -70 } },
-    notes: [
-      "Lefty Rule: Deep Leg moves to 30yd circle, Cover moves to boundary.",
-      "Outgoing bowler covers position of the next bowler."
-    ],
-    players: [
-      { name: "Shirly", role: "Gully", pos: { x: -65, y: -115 }, defaultPos: { x: -65, y: -115 }, leftyPos: { x: -40, y: -125 } },
-      { name: "Ali", role: "Point", pos: { x: -110, y: -70 }, defaultPos: { x: -110, y: -70 } },
-      { name: "Sandeepa", role: "SQL", pos: { x: 110, y: -70 }, defaultPos: { x: 110, y: -70 } },
-      { name: "Chathura", role: "Cover", pos: { x: -110, y: 0 }, defaultPos: { x: -110, y: 0 }, leftyPos: { x: -260, y: 0 } },
-      { name: "Deepal", role: "Deep leg", pos: { x: 260, y: -20 }, defaultPos: { x: 260, y: -20 }, leftyPos: { x: 115, y: -20 } },
-      { name: "Wycliff", role: "Mid W", pos: { x: 110, y: 45 }, defaultPos: { x: 110, y: 45 } },
-      { name: "Rimash", role: "Mid off", pos: { x: -55, y: 110 }, defaultPos: { x: -55, y: 110 } },
-      { name: "Krish", role: "Mid on", pos: { x: 45, y: 110 }, defaultPos: { x: 45, y: 110 } },
-      { name: "Achala", role: "Long on", pos: { x: 0, y: 260 }, defaultPos: { x: 0, y: 260 } }
-    ]
-  },
-  s3: {
-    id: 3,
-    title: "3) After Power Play - Righty (Bowling Down)",
-    phase: "After Power Play",
-    maxOutfield: 5,
-    bowler: "Wycliff",
-    bowlerPos: { x: 0, y: -60 },
-    bowlerDir: "down",
-    wk: { name: "WK", pos: { x: 0, y: 70 } },
-    notes: [
-      "Option to bowler: Send 45's to Boundary at first ball of the over.",
-      "Lefty Rule applies."
-    ],
-    players: [
-      { name: "Sandeepa", role: "Long on", pos: { x: 0, y: -260 }, defaultPos: { x: 0, y: -260 } },
-      { name: "Shirly", role: "Mid on 45", pos: { x: -90, y: -160 }, defaultPos: { x: -90, y: -160 }, b45Pos: { x: -180, y: -230 } },
-      { name: "Krish", role: "Mid off 45", pos: { x: 90, y: -160 }, defaultPos: { x: 90, y: -160 }, b45Pos: { x: 180, y: -230 } },
-      { name: "Ali", role: "Mid W", pos: { x: -110, y: -45 }, defaultPos: { x: -110, y: -45 } },
-      { name: "Deepal", role: "Cover", pos: { x: 110, y: 0 }, defaultPos: { x: 110, y: 0 }, leftyPos: { x: 260, y: 0 } },
-      { name: "Chathura", role: "Deep leg", pos: { x: -260, y: 20 }, defaultPos: { x: -260, y: 20 }, leftyPos: { x: -115, y: 20 } },
-      { name: "Rimash", role: "SQL", pos: { x: -110, y: 70 }, defaultPos: { x: -110, y: 70 } },
-      { name: "Isuru", role: "Point", pos: { x: 110, y: 70 }, defaultPos: { x: 110, y: 70 } },
-      { name: "Achala", role: "Gully", pos: { x: 65, y: 115 }, defaultPos: { x: 65, y: 115 }, leftyPos: { x: 40, y: 125 } }
-    ]
-  },
-  s4: {
-    id: 4,
-    title: "4) After Power Play - Righty (Bowling Up)",
-    phase: "After Power Play",
-    maxOutfield: 5,
-    bowler: "Deepal",
-    bowlerPos: { x: 0, y: 60 },
-    bowlerDir: "up",
-    wk: { name: "WK", pos: { x: 0, y: -70 } },
-    notes: [
-      "Option to bowler: Send 45's to Boundary at first ball of the over.",
-      "Lefty Rule applies."
-    ],
-    players: [
-      { name: "Shirly", role: "Gully", pos: { x: -65, y: -115 }, defaultPos: { x: -65, y: -115 }, leftyPos: { x: -40, y: -125 } },
-      { name: "Ali", role: "Point", pos: { x: -110, y: -70 }, defaultPos: { x: -110, y: -70 } },
-      { name: "Sandeepa", role: "SQL", pos: { x: 110, y: -70 }, defaultPos: { x: 110, y: -70 } },
-      { name: "Chathura", role: "Cover", pos: { x: -110, y: 0 }, defaultPos: { x: -110, y: 0 }, leftyPos: { x: -260, y: 0 } },
-      { name: "Krish", role: "Deep leg", pos: { x: 260, y: -20 }, defaultPos: { x: 260, y: -20 }, leftyPos: { x: 115, y: -20 } },
-      { name: "Isuru", role: "Mid W", pos: { x: 110, y: 45 }, defaultPos: { x: 110, y: 45 } },
-      { name: "Rimash", role: "Mid off 45", pos: { x: -90, y: 160 }, defaultPos: { x: -90, y: 160 }, b45Pos: { x: -180, y: 230 } },
-      { name: "Wycliff", role: "Mid on 45", pos: { x: 90, y: 160 }, defaultPos: { x: 90, y: 160 }, b45Pos: { x: 180, y: 230 } },
-      { name: "Achala", role: "Long on", pos: { x: 0, y: 260 }, defaultPos: { x: 0, y: 260 } }
+      { name: "Achala", role: "Gully", pos: { x: 65, y: 115 }, defaultPos: { x: 65, y: 115 } }
     ]
   }
 };
@@ -126,7 +51,6 @@ class CricketAnimator {
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.currentScenarioKey = "s1";
     this.isLefty = false;
-    this.is45Boundary = false;
     
     // 0.25x Slow Speed Default
     this.animSpeed = 0.018; 
@@ -147,6 +71,11 @@ class CricketAnimator {
 
     this.scenarios = this.loadScenariosFromStorage() || JSON.parse(JSON.stringify(DEFAULT_SCENARIOS));
 
+    // Ensure valid current scenario key
+    if (!this.scenarios[this.currentScenarioKey]) {
+      this.currentScenarioKey = Object.keys(this.scenarios)[0] || "s1";
+    }
+
     this.activePlayers = [];
     this.activeBowler = { name: "KN", x: 0, y: -60, targetX: 0, targetY: -60 };
     this.activeWK = { name: "WK", x: 0, y: 70, targetX: 0, targetY: 70 };
@@ -163,15 +92,12 @@ class CricketAnimator {
   }
 
   initRealtimeStreamSync() {
-    // Unique global sync channel for Cricket Strategy Studio
     this.syncChannel = "cricket_strategy_live_sync_2026";
     this.sseUrl = `https://ntfy.sh/${this.syncChannel}/sse`;
     this.pubUrl = `https://ntfy.sh/${this.syncChannel}`;
 
-    // 1. Initial State Fetch from Open Cloud Store
     this.fetchCloudState();
 
-    // 2. Real-Time SSE Stream Listener (Instant 0ms latency across all devices)
     try {
       this.eventSource = new EventSource(this.sseUrl);
       this.eventSource.onmessage = (event) => {
@@ -181,19 +107,12 @@ class CricketAnimator {
             const val = JSON.parse(parsed.message);
             this.applySnapshotData(val);
           }
-        } catch (err) {
-          // ignore non-json system ping messages
-        }
-      };
-
-      this.eventSource.onerror = () => {
-        // Auto-reconnect fallback
+        } catch (err) {}
       };
     } catch (e) {
       console.warn("SSE Realtime Stream initialized:", e);
     }
 
-    // 3. Fallback Heartbeat Polling (Every 2.5s)
     setInterval(() => {
       if (!this.isDragging) {
         this.fetchCloudState();
@@ -234,7 +153,7 @@ class CricketAnimator {
       this.scenarios = val.scenarios;
     }
 
-    if (val.currentKey && val.currentKey !== this.currentScenarioKey) {
+    if (val.currentKey && val.currentKey !== this.currentScenarioKey && this.scenarios[val.currentKey]) {
       this.currentScenarioKey = val.currentKey;
     }
 
@@ -242,12 +161,6 @@ class CricketAnimator {
       this.isLefty = val.isLefty;
       const toggle = document.getElementById("leftyToggle");
       if (toggle) toggle.checked = this.isLefty;
-    }
-
-    if (typeof val.is45Boundary === "boolean") {
-      this.is45Boundary = val.is45Boundary;
-      const toggle = document.getElementById("b45Toggle");
-      if (toggle) toggle.checked = this.is45Boundary;
     }
 
     this.updateTargets();
@@ -267,7 +180,6 @@ class CricketAnimator {
         scenarios: this.scenarios,
         currentKey: this.currentScenarioKey,
         isLefty: this.isLefty,
-        is45Boundary: this.is45Boundary,
         updatedAt: now
       };
 
@@ -360,7 +272,7 @@ class CricketAnimator {
   updateRoleUI() {
     const roleBadge = document.getElementById("roleBadge");
     const roleBadgeText = document.getElementById("roleBadgeText");
-    const createScenarioBtn = document.getElementById("createScenarioBtn");
+    const scenarioAdminControls = document.getElementById("scenarioAdminControls");
     const addPlayerSection = document.getElementById("addPlayerSection");
 
     if (this.userRole === "admin") {
@@ -368,14 +280,14 @@ class CricketAnimator {
         roleBadge.className = "badge";
       }
       if (roleBadgeText) roleBadgeText.textContent = "👑 Captain Admin";
-      if (createScenarioBtn) createScenarioBtn.style.display = "inline-block";
+      if (scenarioAdminControls) scenarioAdminControls.style.display = "flex";
       if (addPlayerSection) addPlayerSection.style.display = "flex";
     } else {
       if (roleBadge) {
         roleBadge.className = "badge viewer-badge";
       }
       if (roleBadgeText) roleBadgeText.textContent = "👁️ Viewer Mode (Read Only)";
-      if (createScenarioBtn) createScenarioBtn.style.display = "none";
+      if (scenarioAdminControls) scenarioAdminControls.style.display = "none";
       if (addPlayerSection) addPlayerSection.style.display = "none";
     }
   }
@@ -426,6 +338,18 @@ class CricketAnimator {
     this.ctx.imageSmoothingQuality = "high";
   }
 
+  setScenarioBowler(sc, newBowlerName) {
+    const oldBowlerName = sc.bowler || "Bowler";
+    if (oldBowlerName === newBowlerName) return;
+
+    const fielderIdx = sc.players.findIndex(p => p.name === newBowlerName);
+    if (fielderIdx !== -1) {
+      sc.players[fielderIdx].name = oldBowlerName;
+    }
+
+    sc.bowler = newBowlerName;
+  }
+
   initScenarios() {
     const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
     this.bowlerDir = sc.bowlerDir;
@@ -448,11 +372,9 @@ class CricketAnimator {
   }
 
   calculateTargetPos(playerData) {
-    if (this.isLefty && playerData.leftyPos) {
-      return playerData.leftyPos;
-    }
-    if (this.is45Boundary && playerData.b45Pos) {
-      return playerData.b45Pos;
+    if (this.isLefty) {
+      if (playerData.leftyPos) return playerData.leftyPos;
+      return playerData.pos || playerData.defaultPos;
     }
     return playerData.pos || playerData.defaultPos;
   }
@@ -496,17 +418,38 @@ class CricketAnimator {
     }
   }
 
+  populateBowlerDropdown(targetElement, selectedName) {
+    if (!targetElement) return;
+
+    const playerNames = this.activePlayers.map(p => p.name);
+    if (selectedName && !playerNames.includes(selectedName)) {
+      playerNames.unshift(selectedName);
+    }
+    const standardBowlers = ["KN", "B2", "Wycliff", "Deepal", "Shirly", "Sandeepa", "Ali", "Chathura", "Rimash", "Isuru", "Achala", "Krish"];
+    standardBowlers.forEach(b => {
+      if (!playerNames.includes(b)) playerNames.push(b);
+    });
+
+    targetElement.innerHTML = "";
+    playerNames.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      if (name === selectedName) opt.selected = true;
+      targetElement.appendChild(opt);
+    });
+  }
+
   switchScenario(key) {
     this.currentScenarioKey = key;
     const sc = this.scenarios[key] || this.scenarios["s1"];
     this.bowlerDir = sc.bowlerDir;
 
-    this.activeBowler.targetX = sc.bowlerPos.x;
-    this.activeBowler.targetY = sc.bowlerPos.y;
-    this.activeBowler.name = sc.bowler;
+    const bowlerY = sc.bowlerDir === "down" ? -60 : 60;
+    const wkY = sc.bowlerDir === "down" ? 70 : -70;
 
-    this.activeWK.targetX = sc.wk.pos.x;
-    this.activeWK.targetY = sc.wk.pos.y;
+    this.activeBowler = { name: sc.bowler, x: 0, y: bowlerY, targetX: 0, targetY: bowlerY };
+    this.activeWK = { name: sc.wk.name, x: 0, y: wkY, targetX: 0, targetY: wkY };
 
     this.activePlayers = sc.players.map(p => {
       const target = this.calculateTargetPos(p);
@@ -535,44 +478,163 @@ class CricketAnimator {
     this.broadcastLiveState();
   }
 
-  createCustomScenario(title, phase, bowler, bowlerDir, maxOutfield, note) {
+  duplicateCurrentScenario() {
     if (this.userRole === "viewer") return;
-    const key = `custom_${Date.now()}`;
-    const bowlerY = bowlerDir === "down" ? -60 : 60;
-    const wkY = bowlerDir === "down" ? 70 : -70;
 
-    const currentSc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
-    const clonedPlayers = currentSc.players.map(p => JSON.parse(JSON.stringify(p)));
+    const currentSc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
+    const newKey = `custom_${Date.now()}`;
+    const newCount = Object.keys(this.scenarios).length + 1;
 
-    this.scenarios[key] = {
-      id: Object.keys(this.scenarios).length + 1,
-      title: title || "Custom Scenario",
-      phase: phase || "Custom Match Phase",
-      maxOutfield: parseInt(maxOutfield) || 5,
-      bowler: bowler || "Bowler",
-      bowlerPos: { x: 0, y: bowlerY },
-      bowlerDir: bowlerDir || "down",
-      wk: { name: "WK", pos: { x: 0, y: wkY } },
-      notes: [note || "Custom tactics created by Captain."],
+    const clonedPlayers = currentSc.players.map(p => {
+      return {
+        name: p.name,
+        role: p.role,
+        pos: p.pos ? { ...p.pos } : { ...p.defaultPos },
+        defaultPos: p.defaultPos ? { ...p.defaultPos } : { x: 0, y: 0 },
+        leftyPos: p.leftyPos ? { ...p.leftyPos } : undefined
+      };
+    });
+
+    this.scenarios[newKey] = {
+      id: newCount,
+      title: `${newCount}) Scenario ${newCount}`,
+      phase: currentSc.phase || "Power Play",
+      maxOutfield: currentSc.maxOutfield || 2,
+      bowler: currentSc.bowler || "Bowler",
+      bowlerPos: { ...currentSc.bowlerPos },
+      bowlerDir: currentSc.bowlerDir || "down",
+      wk: { name: currentSc.wk.name, pos: { ...currentSc.wk.pos } },
+      notes: [...(currentSc.notes || ["Copied scenario tactic."])],
       isCustom: true,
       players: clonedPlayers
     };
 
     this.saveScenariosToStorage();
-    this.switchScenario(key);
+    this.switchScenario(newKey);
+  }
+
+  openScenarioEditor(key = null) {
+    if (this.userRole === "viewer") return;
+
+    const form = document.getElementById("customScenarioForm");
+    const editingKeyInput = document.getElementById("editingScenarioKey");
+    const formTitle = document.getElementById("formTitleText");
+    const scNameInput = document.getElementById("scNameInput");
+    const scPhaseInput = document.getElementById("scPhaseInput");
+    const scBowlerInput = document.getElementById("scBowlerInput");
+    const scDirInput = document.getElementById("scDirInput");
+    const scNoteInput = document.getElementById("scNoteInput");
+
+    if (key && this.scenarios[key]) {
+      const item = this.scenarios[key];
+      editingKeyInput.value = key;
+      if (formTitle) formTitle.textContent = `⚙️ Edit Settings: ${item.title}`;
+      if (scNameInput) scNameInput.value = item.title;
+      if (scPhaseInput) scPhaseInput.value = item.phase || "Power Play";
+      if (scDirInput) scDirInput.value = item.bowlerDir || "down";
+      if (scNoteInput) scNoteInput.value = (item.notes && item.notes[0]) ? item.notes[0] : "";
+      
+      this.populateBowlerDropdown(scBowlerInput, item.bowler);
+    } else {
+      editingKeyInput.value = "";
+      if (formTitle) formTitle.textContent = "✨ Create New Scenario";
+      if (scNameInput) scNameInput.value = "";
+      if (scPhaseInput) scPhaseInput.value = "Power Play";
+      if (scDirInput) scDirInput.value = "down";
+      if (scNoteInput) scNoteInput.value = "";
+
+      const currentSc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
+      this.populateBowlerDropdown(scBowlerInput, currentSc ? currentSc.bowler : "KN");
+    }
+
+    if (form) form.style.display = "flex";
+  }
+
+  saveScenarioForm() {
+    if (this.userRole === "viewer") return;
+
+    const editingKey = document.getElementById("editingScenarioKey").value;
+    const title = document.getElementById("scNameInput").value.trim();
+    const phase = document.getElementById("scPhaseInput").value;
+    const bowler = document.getElementById("scBowlerInput").value;
+    const dir = document.getElementById("scDirInput").value;
+    const note = document.getElementById("scNoteInput").value.trim();
+
+    const maxOutfield = phase.includes("Power Play") ? 2 : 5;
+    const bowlerY = dir === "down" ? -60 : 60;
+    const wkY = dir === "down" ? 70 : -70;
+
+    if (editingKey && this.scenarios[editingKey]) {
+      const item = this.scenarios[editingKey];
+      if (title) item.title = title;
+      item.phase = phase;
+      item.maxOutfield = maxOutfield;
+      
+      this.setScenarioBowler(item, bowler);
+
+      item.bowlerDir = dir;
+      item.bowlerPos = { x: 0, y: bowlerY };
+      item.wk.pos = { x: 0, y: wkY };
+      item.notes = [note || "Custom scenario settings updated."];
+
+      this.saveScenariosToStorage();
+      if (editingKey === this.currentScenarioKey) {
+        this.switchScenario(editingKey);
+      } else {
+        this.updateScenarioUI();
+      }
+    } else {
+      const key = `custom_${Date.now()}`;
+      const currentSc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
+      const clonedPlayers = currentSc.players.map(p => {
+        return {
+          name: p.name,
+          role: p.role,
+          pos: p.pos ? { ...p.pos } : { ...p.defaultPos },
+          defaultPos: p.defaultPos ? { ...p.defaultPos } : { x: 0, y: 0 },
+          leftyPos: p.leftyPos ? { ...p.leftyPos } : undefined
+        };
+      });
+
+      const newCount = Object.keys(this.scenarios).length + 1;
+
+      const newSc = {
+        id: newCount,
+        title: title ? `${newCount}) ${title}` : `${newCount}) Scenario ${newCount}`,
+        phase: phase,
+        maxOutfield: maxOutfield,
+        bowler: bowler || "Bowler",
+        bowlerPos: { x: 0, y: bowlerY },
+        bowlerDir: dir,
+        wk: { name: "WK", pos: { x: 0, y: wkY } },
+        notes: [note || "Custom tactics created by Captain."],
+        isCustom: true,
+        players: clonedPlayers
+      };
+
+      this.setScenarioBowler(newSc, bowler);
+      this.scenarios[key] = newSc;
+
+      this.saveScenariosToStorage();
+      this.switchScenario(key);
+    }
+
+    const form = document.getElementById("customScenarioForm");
+    if (form) form.style.display = "none";
   }
 
   deleteCustomScenario(key) {
     if (this.userRole === "viewer") return;
-    if (this.scenarios[key] && this.scenarios[key].isCustom) {
+    if (this.scenarios[key]) {
       delete this.scenarios[key];
+      const remainingKeys = Object.keys(this.scenarios);
       this.saveScenariosToStorage();
-      this.switchScenario("s1");
+      this.switchScenario(remainingKeys[0] || "s1");
     }
   }
 
   updateTargets() {
-    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
+    const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
     this.activePlayers.forEach(ap => {
       const pData = sc.players.find(p => p.name === ap.name);
       if (pData) {
@@ -585,7 +647,7 @@ class CricketAnimator {
   }
 
   updateScenarioUI() {
-    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
+    const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
     const isAdmin = (this.userRole === "admin");
     
     const gridContainer = document.getElementById("scenarioGrid");
@@ -601,13 +663,23 @@ class CricketAnimator {
         
         btn.innerHTML = `
           <span style="white-space:normal; word-break:break-word; flex:1; padding-right:0.4rem;">${item.title}</span>
-          ${(item.isCustom && isAdmin) ? `<button class="btn-icon-small" data-del="${key}" style="color:#fb7185; padding:0 0.2rem;">🗑️</button>` : ''}
+          ${isAdmin ? `
+            <div style="display:flex; gap:0.2rem; align-items:center;">
+              <button class="btn-icon-small" data-edit="${key}" title="Edit Scenario Settings" style="color:var(--accent-sky); font-size:0.75rem;">⚙️ Edit</button>
+              ${Object.keys(this.scenarios).length > 1 ? `<button class="btn-icon-small" data-del="${key}" title="Delete Scenario" style="color:#fb7185; font-size:0.75rem;">🗑️</button>` : ''}
+            </div>
+          ` : ''}
         `;
 
         btn.onclick = (e) => {
+          if (e.target.dataset.edit) {
+            e.stopPropagation();
+            this.openScenarioEditor(key);
+            return;
+          }
           if (e.target.dataset.del) {
             e.stopPropagation();
-            if (confirm(`Delete custom scenario "${item.title}"?`)) {
+            if (confirm(`Delete scenario "${item.title}"?`)) {
               this.deleteCustomScenario(key);
             }
             return;
@@ -725,34 +797,30 @@ class CricketAnimator {
       };
     }
 
+    const duplicateScenarioBtn = document.getElementById("duplicateScenarioBtn");
+    if (duplicateScenarioBtn) {
+      duplicateScenarioBtn.onclick = () => this.duplicateCurrentScenario();
+    }
+
     const createScenarioBtn = document.getElementById("createScenarioBtn");
     const customScenarioForm = document.getElementById("customScenarioForm");
     const submitCustomScBtn = document.getElementById("submitCustomScBtn");
+    const cancelCustomScBtn = document.getElementById("cancelCustomScBtn");
+    const cancelCustomScBtn2 = document.getElementById("cancelCustomScBtn2");
 
-    if (createScenarioBtn && customScenarioForm) {
-      createScenarioBtn.onclick = () => {
-        if (this.userRole === "viewer") return;
-        customScenarioForm.style.display = customScenarioForm.style.display === "none" ? "flex" : "none";
-      };
+    const hideForm = () => {
+      if (customScenarioForm) customScenarioForm.style.display = "none";
+    };
+
+    if (createScenarioBtn) {
+      createScenarioBtn.onclick = () => this.openScenarioEditor(null);
     }
 
-    if (submitCustomScBtn) {
-      submitCustomScBtn.onclick = () => {
-        if (this.userRole === "viewer") return;
-        const title = document.getElementById("scNameInput").value.trim();
-        const phase = document.getElementById("scPhaseInput").value;
-        const bowler = document.getElementById("scBowlerInput").value.trim();
-        const dir = document.getElementById("scDirInput").value;
-        const note = document.getElementById("scNoteInput").value.trim();
+    if (cancelCustomScBtn) cancelCustomScBtn.onclick = hideForm;
+    if (cancelCustomScBtn2) cancelCustomScBtn2.onclick = hideForm;
 
-        if (title) {
-          this.createCustomScenario(title, phase, bowler, dir, phase.includes("Power Play") ? 2 : 5, note);
-          customScenarioForm.style.display = "none";
-          document.getElementById("scNameInput").value = "";
-        } else {
-          alert("Please enter a scenario title.");
-        }
-      };
+    if (submitCustomScBtn) {
+      submitCustomScBtn.onclick = () => this.saveScenarioForm();
     }
 
     const addPlayerBtn = document.getElementById("addPlayerBtn");
@@ -774,15 +842,6 @@ class CricketAnimator {
     if (leftyToggle) {
       leftyToggle.onchange = (e) => {
         this.isLefty = e.target.checked;
-        this.updateTargets();
-        this.broadcastLiveState();
-      };
-    }
-
-    const b45Toggle = document.getElementById("b45Toggle");
-    if (b45Toggle) {
-      b45Toggle.onchange = (e) => {
-        this.is45Boundary = e.target.checked;
         this.updateTargets();
         this.broadcastLiveState();
       };
@@ -893,7 +952,7 @@ class CricketAnimator {
   handleEntityDrag(targetX, targetY) {
     if (this.userRole === "viewer") return;
 
-    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
+    const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
     const maxOutfieldAllowed = sc.maxOutfield || 5;
 
     const distFromCenter = Math.hypot(targetX, targetY);
@@ -929,10 +988,9 @@ class CricketAnimator {
     const scP = sc.players.find(p => p.name === this.draggedEntity.name);
     if (scP) {
       scP.role = newRoleName;
-      if (this.isLefty && scP.leftyPos) {
+
+      if (this.isLefty) {
         scP.leftyPos = { x: Math.round(clampedX), y: Math.round(clampedY) };
-      } else if (this.is45Boundary && scP.b45Pos) {
-        scP.b45Pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
       } else {
         scP.pos = { x: Math.round(clampedX), y: Math.round(clampedY) };
       }
@@ -1144,7 +1202,7 @@ class CricketAnimator {
         // BROADCAST TV GRAPHIC PLAYER NODE DOT: Crisp Pure White (#ffffff) with Dark Navy Core & Sky Blue Halo!
         ctx.beginPath();
         ctx.arc(p.x, p.y, isSelected ? 11.5 : dotRadius, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected ? "#38bdf8" : (p.data.b45Pos && this.is45Boundary ? "#f43f5e" : "#ffffff");
+        ctx.fillStyle = isSelected ? "#38bdf8" : "#ffffff";
         if (isHovered) ctx.fillStyle = "#38bdf8";
         
         ctx.shadowColor = isSelected ? "rgba(56, 189, 248, 0.9)" : "rgba(255, 255, 255, 0.9)";
@@ -1153,7 +1211,7 @@ class CricketAnimator {
         ctx.shadowBlur = 0;
 
         // Dark Navy Inner Ring Core for Pure White Dots
-        if (!isSelected && !(p.data.b45Pos && this.is45Boundary)) {
+        if (!isSelected) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
           ctx.fillStyle = "#0f172a";

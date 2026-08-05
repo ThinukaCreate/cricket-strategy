@@ -87,25 +87,31 @@
       <!-- TAB 1: TACTICAL OPTIONS & SCENARIOS -->
       <div class="tab-content active" id="tabOptions">
         
-        <!-- Preset Match Scenarios -->
+        <!-- Preset Match Scenarios with Copy & New Controls -->
         <div class="section-box">
           <div class="box-title">
             <span>📋 Match Scenarios</span>
-            <button class="btn-icon-small" id="createScenarioBtn" title="Create Custom Scenario">➕ New</button>
+            <div style="display:flex; gap:0.35rem;" id="scenarioAdminControls">
+              <button class="btn-icon-small btn-sky" id="duplicateScenarioBtn" title="Copy Active Scenario to Next">📋 Copy Next</button>
+              <button class="btn-icon-small btn-emerald" id="createScenarioBtn" title="Create Custom Scenario">➕ New</button>
+            </div>
           </div>
           <div class="scenario-grid" id="scenarioGrid">
             <!-- Populated via JS -->
           </div>
         </div>
 
-        <!-- Custom Scenario Form (Hidden by Default) -->
-        <div class="section-box" id="customScenarioForm" style="display: none; background: rgba(30, 41, 59, 0.7); border-color: var(--accent-sky);">
+        <!-- Full Scenario Create / Edit Form -->
+        <div class="section-box" id="customScenarioForm" style="display: none; background: rgba(30, 41, 59, 0.85); border-color: var(--accent-sky);">
           <div class="box-title">
-            <span>✨ Create Custom Strategy</span>
+            <span id="formTitleText">✨ Create New Scenario</span>
+            <button class="btn-icon-small btn-rose" id="cancelCustomScBtn" style="font-weight:bold;">✖</button>
           </div>
+          <input type="hidden" id="editingScenarioKey" value="">
+
           <div class="form-group">
             <label class="form-label">Scenario Name</label>
-            <input type="text" class="form-input" id="scNameInput" placeholder="e.g. Death Overs - Lefty">
+            <input type="text" class="form-input" id="scNameInput" placeholder="e.g. Scenario 5 - Death Overs">
           </div>
           <div class="form-group">
             <label class="form-label">Match Phase</label>
@@ -116,8 +122,10 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Bowler Name</label>
-            <input type="text" class="form-input" id="scBowlerInput" value="Bowler">
+            <label class="form-label">Select Bowler</label>
+            <select class="form-input" id="scBowlerInput">
+              <!-- Populated via JS from Team Roster -->
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Bowling Direction</label>
@@ -130,26 +138,23 @@
             <label class="form-label">Tactical Note</label>
             <input type="text" class="form-input" id="scNoteInput" placeholder="Tactical instructions for team">
           </div>
-          <button class="btn-action green" id="submitCustomScBtn">Save Custom Scenario</button>
+          
+          <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
+            <button class="btn-action green" id="submitCustomScBtn" style="flex:1;">Save Scenario Settings</button>
+            <button class="btn-action rose" id="cancelCustomScBtn2" style="width:auto; padding:0 0.8rem;">Cancel</button>
+          </div>
         </div>
 
-        <!-- Match Rules & Toggles Stack -->
+        <!-- Clean Active Match Controls Stack -->
         <div class="section-box">
           <div class="box-title">
-            <span>⚖️ Tactical Rules & Engine</span>
+            <span>⚖️ Active Match Controls</span>
           </div>
           <div class="toggles-stack">
             <div class="toggle-item">
               <span>Lefty Batsman Rule</span>
               <label class="toggle-switch">
                 <input type="checkbox" id="leftyToggle">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-            <div class="toggle-item">
-              <span>Send 45's to Boundary</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="b45Toggle">
                 <span class="toggle-slider"></span>
               </label>
             </div>
