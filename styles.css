@@ -1,4 +1,4 @@
-/* Premium Broadcast Sports Dashboard Design System with Guaranteed Desktop & Mobile Canvas Sizing */
+/* Premium Broadcast Sports Dashboard Design System with Dual-Role Access (Admin 1996 | Viewer 0000) */
 
 :root {
   --bg-dark: #0b0f19;
@@ -61,7 +61,7 @@ body {
   border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 16px;
   padding: 2rem 1.5rem;
-  width: 330px;
+  width: 340px;
   max-width: 90vw;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.2);
@@ -83,7 +83,7 @@ body {
 .pin-card p {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
   line-height: 1.4;
 }
 
@@ -183,6 +183,35 @@ body {
   background: var(--accent-sky);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--accent-sky);
+}
+
+.badge.viewer-badge {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
+
+.badge.viewer-badge .badge-dot {
+  background: #fbbf24;
+  box-shadow: 0 0 8px #fbbf24;
+}
+
+.btn-switch-role {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-switch-role:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: var(--accent-sky);
+  color: var(--accent-sky);
 }
 
 /* Master Container Grid (Left 340px Sidebar | Right 1fr Stage) */
@@ -470,7 +499,7 @@ input:checked + .toggle-slider:before {
   padding: 0.2rem;
 }
 
-/* Right Stage Section - Large Canvas Ground (Robust Sizing for Desktop & Mobile) */
+/* Right Stage Section - Large Canvas Ground */
 .stage-section {
   display: flex;
   align-items: center;

@@ -1,4 +1,21 @@
-// 2D Cricket Field Strategy Animator - Robust Canvas Sizing for Desktop & Mobile (PIN: 1996)
+// 2D Cricket Field Strategy Animator - Dual-Role Access (Admin: 1996 | Viewer: 0000)
+
+// Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radii) {
+    let r = typeof radii === "number" ? radii : 6;
+    if (r > width / 2) r = width / 2;
+    if (r > height / 2) r = height / 2;
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + width, y, x + width, y + height, r);
+    this.arcTo(x + width, y + height, x, y + height, r);
+    this.arcTo(x, y + height, x, y, r);
+    this.arcTo(x, y, x + width, y, r);
+    this.closePath();
+    return this;
+  };
+}
 
 const DEFAULT_SCENARIOS = {
   s1: {
@@ -121,6 +138,9 @@ class CricketAnimator {
     this.draggedEntity = null;
     this.ruleWarningText = null;
 
+    // Role state: 'admin' (PIN 1996) or 'viewer' (PIN 0000)
+    this.userRole = sessionStorage.getItem("cricket_user_role") || "viewer";
+
     this.scenarios = this.loadScenariosFromStorage() || JSON.parse(JSON.stringify(DEFAULT_SCENARIOS));
 
     this.activePlayers = [];
@@ -128,13 +148,11 @@ class CricketAnimator {
     this.activeWK = { name: "WK", x: 0, y: 70, targetX: 0, targetY: 70 };
     this.bowlerDir = "down";
 
-    this.isBallAnimating = false;
-    this.ballSimTime = 0;
-
     this.initPinLock();
     this.initCanvas();
     this.initScenarios();
     this.bindEvents();
+    this.updateRoleUI();
     this.updateScenarioUI();
     this.requestFrame();
   }
@@ -150,16 +168,23 @@ class CricketAnimator {
       return;
     }
 
+    if (overlay) {
+      overlay.style.display = "flex";
+      overlay.classList.remove("unlocked");
+    }
+
     const checkPin = () => {
       const entered = pinInput.value.trim();
       if (entered === "1996") {
+        this.userRole = "admin";
         sessionStorage.setItem("cricket_pin_unlocked", "true");
-        if (overlay) {
-          overlay.classList.add("unlocked");
-          setTimeout(() => {
-            overlay.style.display = "none";
-          }, 350);
-        }
+        sessionStorage.setItem("cricket_user_role", "admin");
+        this.unlockOverlay(overlay);
+      } else if (entered === "0000") {
+        this.userRole = "viewer";
+        sessionStorage.setItem("cricket_pin_unlocked", "true");
+        sessionStorage.setItem("cricket_user_role", "viewer");
+        this.unlockOverlay(overlay);
       } else {
         if (errorMsg) errorMsg.style.display = "block";
         pinInput.value = "";
@@ -185,6 +210,55 @@ class CricketAnimator {
     }
   }
 
+  unlockOverlay(overlay) {
+    if (overlay) {
+      overlay.classList.add("unlocked");
+      setTimeout(() => {
+        overlay.style.display = "none";
+      }, 350);
+    }
+    this.updateRoleUI();
+    this.updateScenarioUI();
+  }
+
+  switchRole() {
+    sessionStorage.removeItem("cricket_pin_unlocked");
+    sessionStorage.removeItem("cricket_user_role");
+    const overlay = document.getElementById("pinLockOverlay");
+    const pinInput = document.getElementById("pinInput");
+    const errorMsg = document.getElementById("pinErrorMsg");
+    if (pinInput) pinInput.value = "";
+    if (errorMsg) errorMsg.style.display = "none";
+    if (overlay) {
+      overlay.style.display = "flex";
+      overlay.classList.remove("unlocked");
+      if (pinInput) pinInput.focus();
+    }
+  }
+
+  updateRoleUI() {
+    const roleBadge = document.getElementById("roleBadge");
+    const roleBadgeText = document.getElementById("roleBadgeText");
+    const createScenarioBtn = document.getElementById("createScenarioBtn");
+    const addPlayerSection = document.getElementById("addPlayerSection");
+
+    if (this.userRole === "admin") {
+      if (roleBadge) {
+        roleBadge.className = "badge";
+      }
+      if (roleBadgeText) roleBadgeText.textContent = "👑 Captain Admin";
+      if (createScenarioBtn) createScenarioBtn.style.display = "inline-block";
+      if (addPlayerSection) addPlayerSection.style.display = "flex";
+    } else {
+      if (roleBadge) {
+        roleBadge.className = "badge viewer-badge";
+      }
+      if (roleBadgeText) roleBadgeText.textContent = "👁️ Viewer Mode (Read Only)";
+      if (createScenarioBtn) createScenarioBtn.style.display = "none";
+      if (addPlayerSection) addPlayerSection.style.display = "none";
+    }
+  }
+
   loadScenariosFromStorage() {
     try {
       const saved = localStorage.getItem("cricket_scenarios_v1");
@@ -195,6 +269,7 @@ class CricketAnimator {
   }
 
   saveScenariosToStorage() {
+    if (this.userRole === "viewer") return; // Read-only mode prevents saving mutations
     try {
       localStorage.setItem("cricket_scenarios_v1", JSON.stringify(this.scenarios));
     } catch (e) {
@@ -204,7 +279,7 @@ class CricketAnimator {
 
   initCanvas() {
     const isMobile = window.innerWidth <= 900;
-    let availableSize = 620;
+    let availableSize = 600;
 
     if (isMobile) {
       const w = window.innerWidth - 24;
@@ -217,7 +292,7 @@ class CricketAnimator {
       availableSize = Math.min(stageW, stageH);
     }
 
-    this.displaySize = Math.max(340, availableSize || 620);
+    this.displaySize = Math.max(340, availableSize || 600);
 
     this.canvas.width = 1800;
     this.canvas.height = 1800;
@@ -338,6 +413,7 @@ class CricketAnimator {
   }
 
   createCustomScenario(title, phase, bowler, bowlerDir, maxOutfield, note) {
+    if (this.userRole === "viewer") return;
     const key = `custom_${Date.now()}`;
     const bowlerY = bowlerDir === "down" ? -60 : 60;
     const wkY = bowlerDir === "down" ? 70 : -70;
@@ -364,6 +440,7 @@ class CricketAnimator {
   }
 
   deleteCustomScenario(key) {
+    if (this.userRole === "viewer") return;
     if (this.scenarios[key] && this.scenarios[key].isCustom) {
       delete this.scenarios[key];
       this.saveScenariosToStorage();
@@ -386,6 +463,7 @@ class CricketAnimator {
 
   updateScenarioUI() {
     const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
+    const isAdmin = (this.userRole === "admin");
     
     const gridContainer = document.getElementById("scenarioGrid");
     if (gridContainer) {
@@ -400,7 +478,7 @@ class CricketAnimator {
         
         btn.innerHTML = `
           <span style="white-space:normal; word-break:break-word; flex:1; padding-right:0.4rem;">${item.title}</span>
-          ${item.isCustom ? `<button class="btn-icon-small" data-del="${key}" style="color:#fb7185; padding:0 0.2rem;">🗑️</button>` : ''}
+          ${(item.isCustom && isAdmin) ? `<button class="btn-icon-small" data-del="${key}" style="color:#fb7185; padding:0 0.2rem;">🗑️</button>` : ''}
         `;
 
         btn.onclick = (e) => {
@@ -418,29 +496,9 @@ class CricketAnimator {
       });
     }
 
-    const scTitle = document.getElementById("scTitle");
-    if (scTitle) scTitle.textContent = sc.title;
-
-    const scPhase = document.getElementById("scPhase");
-    if (scPhase) scPhase.textContent = sc.phase;
-
-    const scBowlerInfo = document.getElementById("scBowlerInfo");
-    if (scBowlerInfo) scBowlerInfo.textContent = `Bowler: ${sc.bowler}`;
-
-    const notesContainer = document.getElementById("tacticalNotes");
-    if (notesContainer) {
-      notesContainer.innerHTML = "";
-      sc.notes.forEach((note, idx) => {
-        const box = document.createElement("div");
-        box.className = `note-box ${idx === 1 ? 'amber' : 'blue'}`;
-        box.innerHTML = `<h4>Note ${idx + 1}</h4><p>${note}</p>`;
-        notesContainer.appendChild(box);
-      });
-    }
-
     const editableRoster = document.getElementById("editableRosterList");
     const countLabel = document.getElementById("fielderCountLabel");
-    if (countLabel) countLabel.textContent = `${this.activePlayers.length} Active Fielders`;
+    if (countLabel) countLabel.textContent = `${this.activePlayers.length} Active Fielders ${!isAdmin ? '(Read Only)' : ''}`;
 
     if (editableRoster) {
       editableRoster.innerHTML = "";
@@ -450,31 +508,35 @@ class CricketAnimator {
         row.innerHTML = `
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <span style="color:var(--text-muted); font-size:0.7rem; font-weight:700;">#${idx+1}</span>
-            <input type="text" class="fielder-edit-input" value="${p.name}" data-index="${idx}">
+            <input type="text" class="fielder-edit-input" value="${p.name}" data-index="${idx}" ${!isAdmin ? 'disabled style="opacity:0.7;"' : ''}>
           </div>
           <div style="display:flex; align-items:center; gap:0.4rem;">
             <span class="fielder-role-badge">${p.role}</span>
-            <button class="btn-icon-small" data-remove="${p.name}">🗑️</button>
+            ${isAdmin ? `<button class="btn-icon-small" data-remove="${p.name}">🗑️</button>` : ''}
           </div>
         `;
 
-        const nameInput = row.querySelector(".fielder-edit-input");
-        nameInput.onchange = (evt) => {
-          const newName = evt.target.value.trim();
-          if (newName) {
-            const oldName = p.name;
-            p.name = newName;
-            p.data.name = newName;
-            if (this.selectedPlayer === oldName) this.selectedPlayer = newName;
-            this.saveScenariosToStorage();
-            this.updateScenarioUI();
-          }
-        };
+        if (isAdmin) {
+          const nameInput = row.querySelector(".fielder-edit-input");
+          nameInput.onchange = (evt) => {
+            const newName = evt.target.value.trim();
+            if (newName) {
+              const oldName = p.name;
+              p.name = newName;
+              p.data.name = newName;
+              if (this.selectedPlayer === oldName) this.selectedPlayer = newName;
+              this.saveScenariosToStorage();
+              this.updateScenarioUI();
+            }
+          };
 
-        const removeBtn = row.querySelector("[data-remove]");
-        removeBtn.onclick = () => {
-          this.removePlayer(p.name);
-        };
+          const removeBtn = row.querySelector("[data-remove]");
+          if (removeBtn) {
+            removeBtn.onclick = () => {
+              this.removePlayer(p.name);
+            };
+          }
+        }
 
         editableRoster.appendChild(row);
       });
@@ -482,7 +544,7 @@ class CricketAnimator {
   }
 
   addPlayer(name) {
-    if (!name) return;
+    if (this.userRole === "viewer" || !name) return;
     const sc = this.scenarios[this.currentScenarioKey];
     
     const spawnPos = { x: 90, y: -90 };
@@ -501,6 +563,7 @@ class CricketAnimator {
   }
 
   removePlayer(name) {
+    if (this.userRole === "viewer") return;
     const sc = this.scenarios[this.currentScenarioKey];
     sc.players = sc.players.filter(p => p.name !== name);
     this.activePlayers = this.activePlayers.filter(p => p.name !== name);
@@ -512,6 +575,11 @@ class CricketAnimator {
   bindEvents() {
     window.addEventListener("resize", () => this.initCanvas());
     window.addEventListener("load", () => this.initCanvas());
+
+    const switchRoleBtn = document.getElementById("switchRoleBtn");
+    if (switchRoleBtn) {
+      switchRoleBtn.onclick = () => this.switchRole();
+    }
 
     const tabOptionsBtn = document.getElementById("tabOptionsBtn");
     const tabFieldersBtn = document.getElementById("tabFieldersBtn");
@@ -540,12 +608,14 @@ class CricketAnimator {
 
     if (createScenarioBtn && customScenarioForm) {
       createScenarioBtn.onclick = () => {
+        if (this.userRole === "viewer") return;
         customScenarioForm.style.display = customScenarioForm.style.display === "none" ? "flex" : "none";
       };
     }
 
     if (submitCustomScBtn) {
       submitCustomScBtn.onclick = () => {
+        if (this.userRole === "viewer") return;
         const title = document.getElementById("scNameInput").value.trim();
         const phase = document.getElementById("scPhaseInput").value;
         const bowler = document.getElementById("scBowlerInput").value.trim();
@@ -566,6 +636,7 @@ class CricketAnimator {
     const newPlayerNameInput = document.getElementById("newPlayerNameInput");
     if (addPlayerBtn && newPlayerNameInput) {
       addPlayerBtn.onclick = () => {
+        if (this.userRole === "viewer") return;
         const name = newPlayerNameInput.value.trim();
         if (name) {
           this.addPlayer(name);
@@ -597,8 +668,10 @@ class CricketAnimator {
       exportPngBtn.onclick = () => this.exportPNG();
     }
 
-    // MOUSE DRAG EVENT LISTENERS
+    // MOUSE DRAG EVENT LISTENERS (Blocked in Viewer Mode)
     this.canvas.onmousedown = (e) => {
+      if (this.userRole === "viewer") return; // Read-only view protection!
+
       const rect = this.canvas.getBoundingClientRect();
       const scale = 650 / this.displaySize;
       const mouseX = ((e.clientX - rect.left) - this.displaySize / 2) * scale;
@@ -614,6 +687,11 @@ class CricketAnimator {
     };
 
     this.canvas.onmousemove = (e) => {
+      if (this.userRole === "viewer") {
+        this.canvas.style.cursor = "default";
+        return;
+      }
+
       const rect = this.canvas.getBoundingClientRect();
       const scale = 650 / this.displaySize;
       const mouseX = ((e.clientX - rect.left) - this.displaySize / 2) * scale;
@@ -641,7 +719,7 @@ class CricketAnimator {
       }
     };
 
-    // TOUCH DRAG EVENT LISTENERS (iOS & ANDROID SMARTPHONES)
+    // TOUCH DRAG EVENT LISTENERS (Blocked in Viewer Mode)
     const getTouchCoords = (evt) => {
       const touch = evt.touches[0] || evt.changedTouches[0];
       const rect = this.canvas.getBoundingClientRect();
@@ -652,6 +730,8 @@ class CricketAnimator {
     };
 
     this.canvas.addEventListener("touchstart", (e) => {
+      if (this.userRole === "viewer") return; // Read-only view protection!
+
       const { x: touchX, y: touchY } = getTouchCoords(e);
       let hit = this.activePlayers.find(p => Math.hypot(p.x - touchX, p.y - touchY) < 30);
       if (hit) {
@@ -664,6 +744,8 @@ class CricketAnimator {
     }, { passive: false });
 
     this.canvas.addEventListener("touchmove", (e) => {
+      if (this.userRole === "viewer") return;
+
       if (this.isDragging && this.draggedEntity) {
         e.preventDefault();
         const { x: touchX, y: touchY } = getTouchCoords(e);
@@ -682,6 +764,8 @@ class CricketAnimator {
   }
 
   handleEntityDrag(targetX, targetY) {
+    if (this.userRole === "viewer") return; // Read-only protection
+
     const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
     const maxOutfieldAllowed = sc.maxOutfield || 5;
 
@@ -761,323 +845,327 @@ class CricketAnimator {
   }
 
   draw(isExport = false) {
-    const ctx = this.ctx;
-    ctx.fillStyle = "#0b0f19";
-    ctx.fillRect(0, 0, 1800, 1800);
+    try {
+      const ctx = this.ctx;
+      ctx.fillStyle = "#0b0f19";
+      ctx.fillRect(0, 0, 1800, 1800);
 
-    ctx.save();
-    ctx.translate(900, 900);
+      ctx.save();
+      ctx.translate(900, 900);
 
-    const scale = 2.769;
-    ctx.scale(scale, scale);
+      const scale = 2.769;
+      ctx.scale(scale, scale);
 
-    const outfieldRadius = 290;
-    const innerRadius = 140;
+      const outfieldRadius = 290;
+      const innerRadius = 140;
 
-    // Plain Natural Green Grass Turf Background
-    const grassGrad = ctx.createRadialGradient(0, 0, 40, 0, 0, outfieldRadius);
-    grassGrad.addColorStop(0, "#057857");
-    grassGrad.addColorStop(0.7, "#045e45");
-    grassGrad.addColorStop(1, "#034533");
-    
-    ctx.beginPath();
-    ctx.arc(0, 0, outfieldRadius, 0, Math.PI * 2);
-    ctx.fillStyle = grassGrad;
-    ctx.fill();
-
-    // Boundary Rope
-    ctx.beginPath();
-    ctx.arc(0, 0, outfieldRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = 3.5;
-    ctx.setLineDash([9, 6]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Pitch Centerline
-    ctx.beginPath();
-    ctx.moveTo(0, -outfieldRadius);
-    ctx.lineTo(0, outfieldRadius);
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Dynamic Off-side / Leg-side orientation logic
-    let isOffSideOnRight = true;
-    if (this.bowlerDir === "down") {
-      isOffSideOnRight = !this.isLefty;
-    } else {
-      isOffSideOnRight = this.isLefty;
-    }
-
-    const leftSideLabel = isOffSideOnRight ? "LEG SIDE" : "OFF SIDE";
-    const rightSideLabel = isOffSideOnRight ? "OFF SIDE" : "LEG SIDE";
-    const leftSideColor = isOffSideOnRight ? "#fbbf24" : "#38bdf8";
-    const rightSideColor = isOffSideOnRight ? "#38bdf8" : "#fbbf24";
-
-    // Dynamic Side Header Banners
-    this.drawSideBanner(-200, -265, leftSideLabel, leftSideColor);
-    this.drawSideBanner(200, -265, rightSideLabel, rightSideColor);
-
-    // ELEGANT VERTICAL GRASS TURF WATERMARKS ("OFF SIDE" and "LEG SIDE")
-    ctx.save();
-    ctx.font = "900 42px Inter";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.095)";
-
-    const leftWatermarkText = isOffSideOnRight ? "LEG SIDE" : "OFF SIDE";
-    const rightWatermarkText = isOffSideOnRight ? "OFF SIDE" : "LEG SIDE";
-
-    // Left Outfield Vertical Watermark (-90 deg rotation)
-    ctx.save();
-    ctx.translate(-225, 0);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText(leftWatermarkText, 0, 0);
-    ctx.restore();
-
-    // Right Outfield Vertical Watermark (+90 deg rotation)
-    ctx.save();
-    ctx.translate(225, 0);
-    ctx.rotate(Math.PI / 2);
-    ctx.fillText(rightWatermarkText, 0, 0);
-    ctx.restore();
-
-    ctx.restore();
-
-    // 30 Yard Inner Circle
-    ctx.beginPath();
-    ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = this.ruleWarningText ? "#ef4444" : "rgba(251, 191, 36, 0.85)";
-    ctx.lineWidth = this.ruleWarningText ? 3.5 : 2;
-    ctx.stroke();
-
-    ctx.fillStyle = this.ruleWarningText ? "#fca5a5" : "rgba(251, 191, 36, 0.95)";
-    ctx.font = "700 10px Inter";
-    ctx.fillText("30 Yard Circle", 5, -innerRadius + 14);
-
-    // Pitch
-    const pW = 26;
-    const pH = 110;
-    ctx.fillStyle = "#d97706";
-    ctx.fillRect(-pW / 2, -pH / 2, pW, pH);
-
-    // Pitch Crease lines & Stumps
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-pW / 2 - 8, -pH / 2 + 15);
-    ctx.lineTo(pW / 2 + 8, -pH / 2 + 15);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-pW / 2 - 8, pH / 2 - 15);
-    ctx.lineTo(pW / 2 + 8, pH / 2 - 15);
-    ctx.stroke();
-
-    ctx.fillStyle = "#fef08a";
-    ctx.fillRect(-6, -pH / 2 + 4, 12, 3);
-    ctx.fillRect(-6, pH / 2 - 7, 12, 3);
-
-    // Bowler Arrow
-    ctx.strokeStyle = "#38bdf8";
-    ctx.fillStyle = "#38bdf8";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    if (this.bowlerDir === "down") {
-      ctx.moveTo(0, -pH / 2 + 25);
-      ctx.lineTo(0, pH / 2 - 25);
-      ctx.stroke();
+      // Plain Natural Green Grass Turf Background
+      const grassGrad = ctx.createRadialGradient(0, 0, 40, 0, 0, outfieldRadius);
+      grassGrad.addColorStop(0, "#057857");
+      grassGrad.addColorStop(0.7, "#045e45");
+      grassGrad.addColorStop(1, "#034533");
+      
       ctx.beginPath();
-      ctx.moveTo(-6, pH / 2 - 35);
-      ctx.lineTo(0, pH / 2 - 25);
-      ctx.lineTo(6, pH / 2 - 35);
+      ctx.arc(0, 0, outfieldRadius, 0, Math.PI * 2);
+      ctx.fillStyle = grassGrad;
       ctx.fill();
-    } else {
-      ctx.moveTo(0, pH / 2 - 25);
-      ctx.lineTo(0, -pH / 2 + 25);
-      ctx.stroke();
+
+      // Boundary Rope
       ctx.beginPath();
-      ctx.moveTo(-6, -pH / 2 + 35);
-      ctx.lineTo(0, -pH / 2 + 25);
-      ctx.lineTo(6, -pH / 2 + 35);
-      ctx.fill();
-    }
+      ctx.arc(0, 0, outfieldRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.lineWidth = 3.5;
+      ctx.setLineDash([9, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-    // Badges for Bowler & WK
-    this.drawRoleBadge(this.activeBowler.x, this.activeBowler.y, `Bowler (${this.activeBowler.name})`, "#38bdf8");
-    this.drawRoleBadge(this.activeWK.x, this.activeWK.y, `WK`, "#fbbf24");
+      // Pitch Centerline
+      ctx.beginPath();
+      ctx.moveTo(0, -outfieldRadius);
+      ctx.lineTo(0, outfieldRadius);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-    const placedLabels = [];
-    placedLabels.push({ x: this.activeBowler.x - 30, y: this.activeBowler.y + 12, w: 60, h: 18 });
-    placedLabels.push({ x: this.activeWK.x - 20, y: this.activeWK.y + 12, w: 40, h: 18 });
-
-    // Draw Player Nodes & Smart Non-Overlapping Labels with Broadcast Grade Crisp White Dots & Sky Blue Role Names
-    this.activePlayers.forEach(p => {
-      const isSelected = (this.selectedPlayer === p.name);
-      const isHovered = (this.hoveredPlayer === p.name);
-      const dotRadius = 9;
-
-      if ((isSelected || isHovered) && !isExport) {
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+      // Dynamic Off-side / Leg-side orientation logic
+      let isOffSideOnRight = true;
+      if (this.bowlerDir === "down") {
+        isOffSideOnRight = !this.isLefty;
+      } else {
+        isOffSideOnRight = this.isLefty;
       }
 
-      // BROADCAST TV GRAPHIC PLAYER NODE DOT: Crisp Pure White (#ffffff) with Dark Navy Core & Sky Blue Halo!
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, isSelected ? 11.5 : dotRadius, 0, Math.PI * 2);
-      ctx.fillStyle = isSelected ? "#38bdf8" : (p.data.b45Pos && this.is45Boundary ? "#f43f5e" : "#ffffff");
-      if (isHovered) ctx.fillStyle = "#38bdf8";
-      
-      ctx.shadowColor = isSelected ? "rgba(56, 189, 248, 0.9)" : "rgba(255, 255, 255, 0.9)";
-      ctx.shadowBlur = isSelected ? 14 : 9;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      const leftSideLabel = isOffSideOnRight ? "LEG SIDE" : "OFF SIDE";
+      const rightSideLabel = isOffSideOnRight ? "OFF SIDE" : "LEG SIDE";
+      const leftSideColor = isOffSideOnRight ? "#fbbf24" : "#38bdf8";
+      const rightSideColor = isOffSideOnRight ? "#38bdf8" : "#fbbf24";
 
-      // Dark Navy Inner Ring Core for Pure White Dots
-      if (!isSelected && !(p.data.b45Pos && this.is45Boundary)) {
+      // Dynamic Side Header Banners
+      this.drawSideBanner(-200, -265, leftSideLabel, leftSideColor);
+      this.drawSideBanner(200, -265, rightSideLabel, rightSideColor);
+
+      // ELEGANT VERTICAL GRASS TURF WATERMARKS ("OFF SIDE" and "LEG SIDE")
+      ctx.save();
+      ctx.font = "900 42px Inter";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.095)";
+
+      const leftWatermarkText = isOffSideOnRight ? "LEG SIDE" : "OFF SIDE";
+      const rightWatermarkText = isOffSideOnRight ? "OFF SIDE" : "LEG SIDE";
+
+      // Left Outfield Vertical Watermark (-90 deg rotation)
+      ctx.save();
+      ctx.translate(-225, 0);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(leftWatermarkText, 0, 0);
+      ctx.restore();
+
+      // Right Outfield Vertical Watermark (+90 deg rotation)
+      ctx.save();
+      ctx.translate(225, 0);
+      ctx.rotate(Math.PI / 2);
+      ctx.fillText(rightWatermarkText, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+
+      // 30 Yard Inner Circle
+      ctx.beginPath();
+      ctx.arc(0, 0, innerRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = this.ruleWarningText ? "#ef4444" : "rgba(251, 191, 36, 0.85)";
+      ctx.lineWidth = this.ruleWarningText ? 3.5 : 2;
+      ctx.stroke();
+
+      ctx.fillStyle = this.ruleWarningText ? "#fca5a5" : "rgba(251, 191, 36, 0.95)";
+      ctx.font = "700 10px Inter";
+      ctx.fillText("30 Yard Circle", 5, -innerRadius + 14);
+
+      // Pitch
+      const pW = 26;
+      const pH = 110;
+      ctx.fillStyle = "#d97706";
+      ctx.fillRect(-pW / 2, -pH / 2, pW, pH);
+
+      // Pitch Crease lines & Stumps
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-pW / 2 - 8, -pH / 2 + 15);
+      ctx.lineTo(pW / 2 + 8, -pH / 2 + 15);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-pW / 2 - 8, pH / 2 - 15);
+      ctx.lineTo(pW / 2 + 8, pH / 2 - 15);
+      ctx.stroke();
+
+      ctx.fillStyle = "#fef08a";
+      ctx.fillRect(-6, -pH / 2 + 4, 12, 3);
+      ctx.fillRect(-6, pH / 2 - 7, 12, 3);
+
+      // Bowler Arrow
+      ctx.strokeStyle = "#38bdf8";
+      ctx.fillStyle = "#38bdf8";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (this.bowlerDir === "down") {
+        ctx.moveTo(0, -pH / 2 + 25);
+        ctx.lineTo(0, pH / 2 - 25);
+        ctx.stroke();
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#0f172a";
+        ctx.moveTo(-6, pH / 2 - 35);
+        ctx.lineTo(0, pH / 2 - 25);
+        ctx.lineTo(6, pH / 2 - 35);
+        ctx.fill();
+      } else {
+        ctx.moveTo(0, pH / 2 - 25);
+        ctx.lineTo(0, -pH / 2 + 25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-6, -pH / 2 + 35);
+        ctx.lineTo(0, -pH / 2 + 25);
+        ctx.lineTo(6, -pH / 2 + 35);
         ctx.fill();
       }
 
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
+      // Badges for Bowler & WK
+      this.drawRoleBadge(this.activeBowler.x, this.activeBowler.y, `Bowler (${this.activeBowler.name})`, "#38bdf8");
+      this.drawRoleBadge(this.activeWK.x, this.activeWK.y, `WK`, "#fbbf24");
 
-      const distFromCenter = Math.hypot(p.x, p.y) || 1;
-      const dirX = p.x / distFromCenter;
-      const dirY = p.y / distFromCenter;
+      const placedLabels = [];
+      placedLabels.push({ x: this.activeBowler.x - 30, y: this.activeBowler.y + 12, w: 60, h: 18 });
+      placedLabels.push({ x: this.activeWK.x - 20, y: this.activeWK.y + 12, w: 40, h: 18 });
 
-      const nameText = p.name;
-      const roleText = p.role;
-      ctx.font = "bold 10px Inter";
-      const nameWidth = ctx.measureText(nameText).width;
-      ctx.font = "9px Inter";
-      const roleWidth = ctx.measureText(roleText).width;
-      const boxW = Math.max(nameWidth, roleWidth) + 14;
-      const boxH = 24;
+      // Draw Player Nodes & Smart Non-Overlapping Labels with Broadcast Grade Crisp White Dots & Sky Blue Role Names
+      this.activePlayers.forEach(p => {
+        const isSelected = (this.selectedPlayer === p.name);
+        const isHovered = (this.hoveredPlayer === p.name);
+        const dotRadius = 9;
 
-      let labelX = p.x + dirX * 20;
-      let labelY = p.y + dirY * 20;
+        if ((isSelected || isHovered) && !isExport) {
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(p.x, p.y);
+          ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
 
-      let attempts = 0;
-      let hasOverlap = true;
-      let labelShifted = false;
+        // BROADCAST TV GRAPHIC PLAYER NODE DOT: Crisp Pure White (#ffffff) with Dark Navy Core & Sky Blue Halo!
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isSelected ? 11.5 : dotRadius, 0, Math.PI * 2);
+        ctx.fillStyle = isSelected ? "#38bdf8" : (p.data.b45Pos && this.is45Boundary ? "#f43f5e" : "#ffffff");
+        if (isHovered) ctx.fillStyle = "#38bdf8";
+        
+        ctx.shadowColor = isSelected ? "rgba(56, 189, 248, 0.9)" : "rgba(255, 255, 255, 0.9)";
+        ctx.shadowBlur = isSelected ? 14 : 9;
+        ctx.fill();
+        ctx.shadowBlur = 0;
 
-      while (hasOverlap && attempts < 15) {
-        hasOverlap = false;
+        // Dark Navy Inner Ring Core for Pure White Dots
+        if (!isSelected && !(p.data.b45Pos && this.is45Boundary)) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "#0f172a";
+          ctx.fill();
+        }
 
-        const curBox = {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        const distFromCenter = Math.hypot(p.x, p.y) || 1;
+        const dirX = p.x / distFromCenter;
+        const dirY = p.y / distFromCenter;
+
+        const nameText = p.name;
+        const roleText = p.role;
+        ctx.font = "bold 10px Inter";
+        const nameWidth = ctx.measureText(nameText).width;
+        ctx.font = "9px Inter";
+        const roleWidth = ctx.measureText(roleText).width;
+        const boxW = Math.max(nameWidth, roleWidth) + 14;
+        const boxH = 24;
+
+        let labelX = p.x + dirX * 20;
+        let labelY = p.y + dirY * 20;
+
+        let attempts = 0;
+        let hasOverlap = true;
+        let labelShifted = false;
+
+        while (hasOverlap && attempts < 15) {
+          hasOverlap = false;
+
+          const curBox = {
+            x: labelX - boxW / 2,
+            y: labelY - boxH / 2,
+            w: boxW,
+            h: boxH
+          };
+
+          // 1) Check overlap with other dialog boxes
+          for (let b of placedLabels) {
+            if (
+              curBox.x < b.x + b.w &&
+              curBox.x + curBox.w > b.x &&
+              curBox.y < b.y + b.h &&
+              curBox.y + curBox.h > b.y
+            ) {
+              hasOverlap = true;
+              labelShifted = true;
+              break;
+            }
+          }
+
+          // 2) 60%+ DOT VISIBILITY PROTECTION
+          const overlapX = Math.max(0, Math.min(curBox.x + curBox.w, p.x + dotRadius) - Math.max(curBox.x, p.x - dotRadius));
+          const overlapY = Math.max(0, Math.min(curBox.y + curBox.h, p.y + dotRadius) - Math.max(curBox.y, p.y - dotRadius));
+          const overlapArea = overlapX * overlapY;
+          const totalDotArea = Math.PI * dotRadius * dotRadius;
+          const visiblePercentage = (1 - (overlapArea / totalDotArea)) * 100;
+
+          if (visiblePercentage < 60) {
+            hasOverlap = true;
+            labelShifted = true;
+          }
+
+          if (hasOverlap) {
+            labelY += (dirY >= 0 ? 16 : -16);
+            labelX += (dirX >= 0 ? 14 : -14);
+          }
+
+          attempts++;
+        }
+
+        placedLabels.push({
           x: labelX - boxW / 2,
           y: labelY - boxH / 2,
           w: boxW,
           h: boxH
-        };
+        });
 
-        // 1) Check overlap with other dialog boxes
-        for (let b of placedLabels) {
-          if (
-            curBox.x < b.x + b.w &&
-            curBox.x + curBox.w > b.x &&
-            curBox.y < b.y + b.h &&
-            curBox.y + curBox.h > b.y
-          ) {
-            hasOverlap = true;
-            labelShifted = true;
-            break;
-          }
-        }
+        // DRAW CALLOUT CONNECTOR & ARROWHEAD (SKY BLUE THEME)
+        const badgeCenterX = labelX;
+        const badgeCenterY = labelY;
 
-        // 2) 60%+ DOT VISIBILITY PROTECTION
-        const overlapX = Math.max(0, Math.min(curBox.x + curBox.w, p.x + dotRadius) - Math.max(curBox.x, p.x - dotRadius));
-        const overlapY = Math.max(0, Math.min(curBox.y + curBox.h, p.y + dotRadius) - Math.max(curBox.y, p.y - dotRadius));
-        const overlapArea = overlapX * overlapY;
-        const totalDotArea = Math.PI * dotRadius * dotRadius;
-        const visiblePercentage = (1 - (overlapArea / totalDotArea)) * 100;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(badgeCenterX, badgeCenterY);
+        ctx.strokeStyle = isSelected ? "rgba(56, 189, 248, 0.9)" : (labelShifted ? "rgba(56, 189, 248, 0.85)" : "rgba(255, 255, 255, 0.45)");
+        ctx.lineWidth = labelShifted ? 1.8 : 1.2;
+        ctx.stroke();
 
-        if (visiblePercentage < 60) {
-          hasOverlap = true;
-          labelShifted = true;
-        }
+        // Arrowhead dot near player node
+        const angle = Math.atan2(p.y - badgeCenterY, p.x - badgeCenterX);
+        ctx.beginPath();
+        ctx.arc(p.x - Math.cos(angle) * 7, p.y - Math.sin(angle) * 7, 3, 0, Math.PI * 2);
+        ctx.fillStyle = isSelected ? "#38bdf8" : "#38bdf8";
+        ctx.fill();
 
-        if (hasOverlap) {
-          labelY += (dirY >= 0 ? 16 : -16);
-          labelX += (dirX >= 0 ? 14 : -14);
-        }
+        // Dialog Box Badge Container (Dark Glass with Sky Blue Border Accent)
+        ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
+        ctx.strokeStyle = isSelected ? "rgba(56, 189, 248, 0.9)" : (labelShifted ? "#38bdf8" : "rgba(56, 189, 248, 0.4)");
+        ctx.lineWidth = labelShifted ? 1.5 : 1;
+        
+        const px = labelX - boxW / 2;
+        const py = labelY - 11;
+        ctx.beginPath();
+        ctx.roundRect(px, py, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
 
-        attempts++;
-      }
+        // Dialog Text Content: CRISP PURE WHITE NAME + HARMONIOUS SKY BLUE ROLE/POSITION TITLE
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px Inter";
+        ctx.textAlign = "center";
+        ctx.fillText(nameText, labelX, labelY - 1);
 
-      placedLabels.push({
-        x: labelX - boxW / 2,
-        y: labelY - boxH / 2,
-        w: boxW,
-        h: boxH
+        ctx.fillStyle = isSelected ? "#38bdf8" : "#38bdf8";
+        ctx.font = "bold 9px Inter";
+        ctx.fillText(roleText, labelX, labelY + 9);
       });
 
-      // DRAW CALLOUT CONNECTOR & ARROWHEAD (SKY BLUE THEME)
-      const badgeCenterX = labelX;
-      const badgeCenterY = labelY;
+      if (this.ruleWarningText && !isExport) {
+        ctx.font = "bold 12px Inter";
+        const tw = ctx.measureText(this.ruleWarningText).width + 24;
+        ctx.fillStyle = "rgba(239, 68, 68, 0.95)";
+        ctx.beginPath();
+        ctx.roundRect(-tw / 2, -260, tw, 28, 6);
+        ctx.fill();
 
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(badgeCenterX, badgeCenterY);
-      ctx.strokeStyle = isSelected ? "rgba(56, 189, 248, 0.9)" : (labelShifted ? "rgba(56, 189, 248, 0.85)" : "rgba(255, 255, 255, 0.45)");
-      ctx.lineWidth = labelShifted ? 1.8 : 1.2;
-      ctx.stroke();
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText(this.ruleWarningText, 0, -242);
+      }
 
-      // Arrowhead dot near player node
-      const angle = Math.atan2(p.y - badgeCenterY, p.x - badgeCenterX);
-      ctx.beginPath();
-      ctx.arc(p.x - Math.cos(angle) * 7, p.y - Math.sin(angle) * 7, 3, 0, Math.PI * 2);
-      ctx.fillStyle = isSelected ? "#38bdf8" : "#38bdf8";
-      ctx.fill();
-
-      // Dialog Box Badge Container (Dark Glass with Sky Blue Border Accent)
-      ctx.fillStyle = "rgba(15, 23, 42, 0.94)";
-      ctx.strokeStyle = isSelected ? "rgba(56, 189, 248, 0.9)" : (labelShifted ? "#38bdf8" : "rgba(56, 189, 248, 0.4)");
-      ctx.lineWidth = labelShifted ? 1.5 : 1;
-      
-      const px = labelX - boxW / 2;
-      const py = labelY - 11;
-      ctx.beginPath();
-      ctx.roundRect(px, py, boxW, boxH, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      // Dialog Text Content: CRISP PURE WHITE NAME + HARMONIOUS SKY BLUE ROLE/POSITION TITLE
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 10px Inter";
-      ctx.textAlign = "center";
-      ctx.fillText(nameText, labelX, labelY - 1);
-
-      ctx.fillStyle = isSelected ? "#38bdf8" : "#38bdf8"; // HARMONIOUS SKY BLUE POSITION ROLE COLOR!
-      ctx.font = "bold 9px Inter";
-      ctx.fillText(roleText, labelX, labelY + 9);
-    });
-
-    if (this.ruleWarningText && !isExport) {
-      ctx.font = "bold 12px Inter";
-      const tw = ctx.measureText(this.ruleWarningText).width + 24;
-      ctx.fillStyle = "rgba(239, 68, 68, 0.95)";
-      ctx.beginPath();
-      ctx.roundRect(-tw / 2, -260, tw, 28, 6);
-      ctx.fill();
-
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.fillText(this.ruleWarningText, 0, -242);
+      ctx.restore();
+    } catch (err) {
+      console.error("Canvas draw error:", err);
     }
-
-    ctx.restore();
   }
 
   drawSideBanner(x, y, label, color) {
