@@ -12,6 +12,10 @@
   
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Firebase Realtime Cloud Sync CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -47,6 +51,12 @@
     </div>
     
     <div class="header-badges">
+      <!-- Live Cloud Sync Indicator -->
+      <div class="badge sync-badge" id="syncStatusBadge">
+        <span class="badge-dot pulse-dot"></span>
+        <span id="syncStatusText">🟢 Live Cloud Sync</span>
+      </div>
+
       <!-- Role Badge & Switch Role Button -->
       <div class="badge" id="roleBadge">
         <span class="badge-dot"></span>

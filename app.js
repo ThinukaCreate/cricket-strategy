@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Dual-Role Access (Admin: 1996 | Viewer: 0000)
+// 2D Cricket Field Strategy Animator - Always-Live Continuous Cloud Sync Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -138,6 +138,10 @@ class CricketAnimator {
     this.draggedEntity = null;
     this.ruleWarningText = null;
 
+    this.isRemoteUpdate = false;
+    this.broadcastTimer = null;
+    this.lastSyncTimestamp = 0;
+
     // Role state: 'admin' (PIN 1996) or 'viewer' (PIN 0000)
     this.userRole = sessionStorage.getItem("cricket_user_role") || "viewer";
 
@@ -151,10 +155,107 @@ class CricketAnimator {
     this.initPinLock();
     this.initCanvas();
     this.initScenarios();
+    this.initFirebaseSync();
     this.bindEvents();
     this.updateRoleUI();
     this.updateScenarioUI();
     this.requestFrame();
+  }
+
+  initFirebaseSync() {
+    try {
+      const firebaseConfig = {
+        databaseURL: "https://cricket-strategy-default-rtdb.firebaseio.com"
+      };
+
+      if (window.firebase && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+
+      if (window.firebase) {
+        this.dbRef = firebase.database().ref("cricket_strategy_live");
+        
+        // 1. Initial Immediate Cloud Sync on Startup
+        this.dbRef.once("value").then((snapshot) => {
+          this.applySnapshotData(snapshot.val());
+        });
+
+        // 2. Real-Time Cloud Listener
+        this.dbRef.on("value", (snapshot) => {
+          this.applySnapshotData(snapshot.val());
+        });
+
+        // 3. Guaranteed Continuous Heartbeat Polling (every 1 second)
+        setInterval(() => {
+          if (!this.isDragging) {
+            this.dbRef.once("value").then((snap) => {
+              const val = snap.val();
+              if (val && val.updatedAt && val.updatedAt > this.lastSyncTimestamp) {
+                this.applySnapshotData(val);
+              }
+            });
+          }
+        }, 1000);
+      }
+    } catch (e) {
+      console.warn("Firebase sync initialized:", e);
+    }
+  }
+
+  applySnapshotData(val) {
+    if (!val) return;
+    
+    // Prevent overwriting if local timestamp is newer
+    if (val.updatedAt && val.updatedAt < this.lastSyncTimestamp && this.userRole === "admin") {
+      return;
+    }
+
+    this.lastSyncTimestamp = val.updatedAt || Date.now();
+    this.isRemoteUpdate = true;
+
+    if (val.scenarios) {
+      this.scenarios = val.scenarios;
+    }
+
+    if (val.currentKey && val.currentKey !== this.currentScenarioKey) {
+      this.currentScenarioKey = val.currentKey;
+    }
+
+    if (typeof val.isLefty === "boolean") {
+      this.isLefty = val.isLefty;
+      const toggle = document.getElementById("leftyToggle");
+      if (toggle) toggle.checked = this.isLefty;
+    }
+
+    if (typeof val.is45Boundary === "boolean") {
+      this.is45Boundary = val.is45Boundary;
+      const toggle = document.getElementById("b45Toggle");
+      if (toggle) toggle.checked = this.is45Boundary;
+    }
+
+    this.updateTargets();
+    this.updateScenarioUI();
+    this.isRemoteUpdate = false;
+  }
+
+  broadcastLiveState() {
+    if (this.isRemoteUpdate || this.userRole === "viewer") return;
+
+    const now = Date.now();
+    this.lastSyncTimestamp = now;
+
+    if (this.broadcastTimer) clearTimeout(this.broadcastTimer);
+    this.broadcastTimer = setTimeout(() => {
+      if (this.dbRef) {
+        this.dbRef.set({
+          scenarios: this.scenarios,
+          currentKey: this.currentScenarioKey,
+          isLefty: this.isLefty,
+          is45Boundary: this.is45Boundary,
+          updatedAt: now
+        });
+      }
+    }, 20); // Ultra-fast 20ms continuous sync during dragging!
   }
 
   initPinLock() {
@@ -269,9 +370,10 @@ class CricketAnimator {
   }
 
   saveScenariosToStorage() {
-    if (this.userRole === "viewer") return; // Read-only mode prevents saving mutations
+    if (this.userRole === "viewer") return;
     try {
       localStorage.setItem("cricket_scenarios_v1", JSON.stringify(this.scenarios));
+      this.broadcastLiveState();
     } catch (e) {
       console.error(e);
     }
@@ -410,6 +512,7 @@ class CricketAnimator {
     });
 
     this.updateScenarioUI();
+    this.broadcastLiveState();
   }
 
   createCustomScenario(title, phase, bowler, bowlerDir, maxOutfield, note) {
@@ -449,7 +552,7 @@ class CricketAnimator {
   }
 
   updateTargets() {
-    const sc = this.scenarios[this.currentScenarioKey];
+    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
     this.activePlayers.forEach(ap => {
       const pData = sc.players.find(p => p.name === ap.name);
       if (pData) {
@@ -652,6 +755,7 @@ class CricketAnimator {
       leftyToggle.onchange = (e) => {
         this.isLefty = e.target.checked;
         this.updateTargets();
+        this.broadcastLiveState();
       };
     }
 
@@ -660,6 +764,7 @@ class CricketAnimator {
       b45Toggle.onchange = (e) => {
         this.is45Boundary = e.target.checked;
         this.updateTargets();
+        this.broadcastLiveState();
       };
     }
 
@@ -670,7 +775,7 @@ class CricketAnimator {
 
     // MOUSE DRAG EVENT LISTENERS (Blocked in Viewer Mode)
     this.canvas.onmousedown = (e) => {
-      if (this.userRole === "viewer") return; // Read-only view protection!
+      if (this.userRole === "viewer") return;
 
       const rect = this.canvas.getBoundingClientRect();
       const scale = 650 / this.displaySize;
@@ -716,6 +821,7 @@ class CricketAnimator {
         this.draggedEntity = null;
         this.ruleWarningText = null;
         this.updateScenarioUI();
+        this.broadcastLiveState();
       }
     };
 
@@ -730,7 +836,7 @@ class CricketAnimator {
     };
 
     this.canvas.addEventListener("touchstart", (e) => {
-      if (this.userRole === "viewer") return; // Read-only view protection!
+      if (this.userRole === "viewer") return;
 
       const { x: touchX, y: touchY } = getTouchCoords(e);
       let hit = this.activePlayers.find(p => Math.hypot(p.x - touchX, p.y - touchY) < 30);
@@ -759,12 +865,13 @@ class CricketAnimator {
         this.draggedEntity = null;
         this.ruleWarningText = null;
         this.updateScenarioUI();
+        this.broadcastLiveState();
       }
     });
   }
 
   handleEntityDrag(targetX, targetY) {
-    if (this.userRole === "viewer") return; // Read-only protection
+    if (this.userRole === "viewer") return;
 
     const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
     const maxOutfieldAllowed = sc.maxOutfield || 5;

@@ -1,4 +1,4 @@
-/* Premium Broadcast Sports Dashboard Design System with Dual-Role Access (Admin 1996 | Viewer 0000) */
+/* Premium Broadcast Sports Dashboard Design System with Live Real-Time Cloud Sync */
 
 :root {
   --bg-dark: #0b0f19;
@@ -11,6 +11,7 @@
   --accent-amber: #fbbf24;
   --accent-purple: #c084fc;
   --accent-rose: #f43f5e;
+  --accent-emerald: #10b981;
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -183,6 +184,24 @@ body {
   background: var(--accent-sky);
   border-radius: 50%;
   box-shadow: 0 0 8px var(--accent-sky);
+}
+
+.sync-badge {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: var(--accent-emerald);
+}
+
+.pulse-dot {
+  background: var(--accent-emerald) !important;
+  box-shadow: 0 0 10px var(--accent-emerald) !important;
+  animation: livePulse 1.5s infinite ease-in-out;
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
 }
 
 .badge.viewer-badge {
@@ -545,6 +564,8 @@ input:checked + .toggle-slider:before {
     height: auto;
     padding: 0.6rem 0.85rem;
     flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
   .brand-title h1 {
@@ -557,6 +578,7 @@ input:checked + .toggle-slider:before {
 
   .header-badges {
     font-size: 0.65rem;
+    flex-wrap: wrap;
   }
 
   .app-container {
