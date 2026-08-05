@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Ultra-Compact RHB/LHB Stance Switcher Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Streamlined Viewer Sidebar Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -286,12 +286,13 @@ class CricketAnimator {
     }
   }
 
-  // Update Role Access & Navigation UI (Pure Icon Badges with Tooltips!)
+  // Update Role Access & Navigation UI (Hides single tab bar for Viewers!)
   updateRoleUI() {
     const roleBadge = document.getElementById("roleBadge");
     const roleBadgeText = document.getElementById("roleBadgeText");
     const scenarioAdminControls = document.getElementById("scenarioAdminControls");
     const addPlayerSection = document.getElementById("addPlayerSection");
+    const sidebarNavTabs = document.querySelector(".sidebar-nav-tabs");
     const tabFieldersBtn = document.getElementById("tabFieldersBtn");
     const tabOptionsBtn = document.getElementById("tabOptionsBtn");
     const tabOptions = document.getElementById("tabOptions");
@@ -303,6 +304,7 @@ class CricketAnimator {
         roleBadge.title = "👑 Captain Admin Mode (Full Access)";
       }
       if (roleBadgeText) roleBadgeText.textContent = "👑";
+      if (sidebarNavTabs) sidebarNavTabs.style.display = "flex";
       if (scenarioAdminControls) scenarioAdminControls.style.display = "flex";
       if (addPlayerSection) addPlayerSection.style.display = "flex";
       if (tabFieldersBtn) tabFieldersBtn.style.display = "flex";
@@ -312,10 +314,9 @@ class CricketAnimator {
         roleBadge.title = "👁️ Viewer Mode (Read Only)";
       }
       if (roleBadgeText) roleBadgeText.textContent = "👁️";
+      if (sidebarNavTabs) sidebarNavTabs.style.display = "none"; // Hide tab bar completely for Viewers!
       if (scenarioAdminControls) scenarioAdminControls.style.display = "none";
       if (addPlayerSection) addPlayerSection.style.display = "none";
-
-      if (tabFieldersBtn) tabFieldersBtn.style.display = "none";
 
       if (tabOptionsBtn) tabOptionsBtn.classList.add("active");
       if (tabOptions) tabOptions.classList.add("active");
