@@ -216,6 +216,7 @@ class CricketAnimator {
 
     if (val.syncVersion) {
       this.lastSyncVersion = val.syncVersion;
+      this.syncVersion = val.syncVersion;
     }
 
     this.isRemoteUpdate = true;
