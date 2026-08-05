@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Single Default Scenario Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Enhanced Real-Time Broadcast Sync Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -52,8 +52,8 @@ class CricketAnimator {
     this.currentScenarioKey = "s1";
     this.isLefty = false;
     
-    // 0.25x Slow Speed Default
-    this.animSpeed = 0.018; 
+    // Smooth 0.25x Speed Transition
+    this.animSpeed = 0.025; 
 
     this.selectedPlayer = null;
     this.hoveredPlayer = null;
@@ -71,7 +71,6 @@ class CricketAnimator {
 
     this.scenarios = this.loadScenariosFromStorage() || JSON.parse(JSON.stringify(DEFAULT_SCENARIOS));
 
-    // Ensure valid current scenario key
     if (!this.scenarios[this.currentScenarioKey]) {
       this.currentScenarioKey = Object.keys(this.scenarios)[0] || "s1";
     }
@@ -113,11 +112,12 @@ class CricketAnimator {
       console.warn("SSE Realtime Stream initialized:", e);
     }
 
+    // High frequency poll fallback for mobile devices
     setInterval(() => {
       if (!this.isDragging) {
         this.fetchCloudState();
       }
-    }, 2500);
+    }, 1500);
   }
 
   fetchCloudState() {
@@ -142,6 +142,7 @@ class CricketAnimator {
   applySnapshotData(val) {
     if (!val || typeof val !== "object") return;
     
+    // Ignore stale echo broadcasts on Admin device
     if (val.updatedAt && val.updatedAt <= this.lastSyncTimestamp && this.userRole === "admin") {
       return;
     }
@@ -153,7 +154,7 @@ class CricketAnimator {
       this.scenarios = val.scenarios;
     }
 
-    if (val.currentKey && val.currentKey !== this.currentScenarioKey && this.scenarios[val.currentKey]) {
+    if (val.currentKey && this.scenarios[val.currentKey]) {
       this.currentScenarioKey = val.currentKey;
     }
 
@@ -185,9 +186,10 @@ class CricketAnimator {
 
       fetch(this.pubUrl, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).catch(() => {});
-    }, 40);
+    }, 30);
   }
 
   initPinLock() {
@@ -326,7 +328,7 @@ class CricketAnimator {
       availableSize = Math.min(stageW, stageH);
     }
 
-    this.displaySize = Math.max(340, availableSize || 600);
+    this.displaySize = Math.max(320, availableSize || 600);
 
     this.canvas.width = 1800;
     this.canvas.height = 1800;
@@ -351,10 +353,13 @@ class CricketAnimator {
   }
 
   initScenarios() {
-    const sc = this.scenarios[this.currentScenarioKey] || this.scenarios["s1"];
-    this.bowlerDir = sc.bowlerDir;
-    this.activeBowler = { name: sc.bowler, x: sc.bowlerPos.x, y: sc.bowlerPos.y, targetX: sc.bowlerPos.x, targetY: sc.bowlerPos.y };
-    this.activeWK = { name: sc.wk.name, x: sc.wk.pos.x, y: sc.wk.pos.y, targetX: sc.wk.pos.x, targetY: sc.wk.pos.y };
+    const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
+    this.bowlerDir = sc.bowlerDir || "down";
+    const bowlerY = this.bowlerDir === "down" ? -60 : 60;
+    const wkY = this.bowlerDir === "down" ? 70 : -70;
+
+    this.activeBowler = { name: sc.bowler, x: 0, y: bowlerY, targetX: 0, targetY: bowlerY };
+    this.activeWK = { name: sc.wk.name, x: 0, y: wkY, targetX: 0, targetY: wkY };
 
     this.activePlayers = sc.players.map(p => {
       const target = this.calculateTargetPos(p);
@@ -442,38 +447,7 @@ class CricketAnimator {
 
   switchScenario(key) {
     this.currentScenarioKey = key;
-    const sc = this.scenarios[key] || this.scenarios["s1"];
-    this.bowlerDir = sc.bowlerDir;
-
-    const bowlerY = sc.bowlerDir === "down" ? -60 : 60;
-    const wkY = sc.bowlerDir === "down" ? 70 : -70;
-
-    this.activeBowler = { name: sc.bowler, x: 0, y: bowlerY, targetX: 0, targetY: bowlerY };
-    this.activeWK = { name: sc.wk.name, x: 0, y: wkY, targetX: 0, targetY: wkY };
-
-    this.activePlayers = sc.players.map(p => {
-      const target = this.calculateTargetPos(p);
-      const roleName = this.calculateCricketPositionName(target.x, target.y);
-      let existing = this.activePlayers.find(ap => ap.name === p.name);
-      if (existing) {
-        existing.role = roleName;
-        existing.targetX = target.x;
-        existing.targetY = target.y;
-        existing.data = p;
-        return existing;
-      } else {
-        return {
-          name: p.name,
-          role: roleName,
-          x: target.x,
-          y: target.y,
-          targetX: target.x,
-          targetY: target.y,
-          data: p
-        };
-      }
-    });
-
+    this.updateTargets();
     this.updateScenarioUI();
     this.broadcastLiveState();
   }
@@ -633,15 +607,44 @@ class CricketAnimator {
     }
   }
 
+  // Complete Target & Entity Sync for Active Bowler, WK, BowlerDir & Players!
   updateTargets() {
     const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
-    this.activePlayers.forEach(ap => {
-      const pData = sc.players.find(p => p.name === ap.name);
-      if (pData) {
-        const target = this.calculateTargetPos(pData);
-        ap.targetX = target.x;
-        ap.targetY = target.y;
-        ap.role = this.calculateCricketPositionName(target.x, target.y);
+    if (!sc) return;
+
+    this.bowlerDir = sc.bowlerDir || "down";
+    const bowlerY = this.bowlerDir === "down" ? -60 : 60;
+    const wkY = this.bowlerDir === "down" ? 70 : -70;
+
+    this.activeBowler.name = sc.bowler || "Bowler";
+    this.activeBowler.targetX = 0;
+    this.activeBowler.targetY = bowlerY;
+
+    this.activeWK.name = (sc.wk && sc.wk.name) ? sc.wk.name : "WK";
+    this.activeWK.targetX = 0;
+    this.activeWK.targetY = wkY;
+
+    this.activePlayers = sc.players.map(p => {
+      const target = this.calculateTargetPos(p);
+      const roleName = this.calculateCricketPositionName(target.x, target.y);
+      let existing = this.activePlayers.find(ap => ap.name === p.name);
+      if (existing) {
+        existing.name = p.name;
+        existing.role = roleName;
+        existing.targetX = target.x;
+        existing.targetY = target.y;
+        existing.data = p;
+        return existing;
+      } else {
+        return {
+          name: p.name,
+          role: roleName,
+          x: target.x,
+          y: target.y,
+          targetX: target.x,
+          targetY: target.y,
+          data: p
+        };
       }
     });
   }

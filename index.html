@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>2D Cricket Field Strategy Animator</title>
   
   <!-- Modern Google Font: Inter -->
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 
   <!-- Firebase Realtime Cloud Sync CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -206,7 +206,7 @@
 
   </main>
 
-  <!-- Application Logic -->
-  <script src="app.js"></script>
+  <!-- Application Logic with cache-busting query parameter -->
+  <script src="app.js?v=2"></script>
 </body>
 </html>
