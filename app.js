@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Streamlined Viewer Sidebar Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Triple-Redundant Realtime Cloud Sync Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -64,7 +64,8 @@ class CricketAnimator {
 
     this.isRemoteUpdate = false;
     this.broadcastTimer = null;
-    this.lastSyncTimestamp = 0;
+    this.syncVersion = 0;
+    this.lastSyncVersion = 0;
 
     // Role state: 'admin' (PIN 1996) or 'viewer' (PIN 0000)
     this.userRole = sessionStorage.getItem("cricket_user_role") || "viewer";
@@ -95,8 +96,46 @@ class CricketAnimator {
     this.sseUrl = `https://ntfy.sh/${this.syncChannel}/sse`;
     this.pubUrl = `https://ntfy.sh/${this.syncChannel}`;
 
-    this.fetchCloudState();
+    // 1) Local BroadcastChannel & Storage Sync (Instant same-device/browser sync)
+    try {
+      this.bc = new BroadcastChannel("cricket_strategy_bc_channel");
+      this.bc.onmessage = (event) => {
+        if (event.data) {
+          this.applySnapshotData(event.data);
+        }
+      };
+    } catch (e) {}
 
+    window.addEventListener("storage", (e) => {
+      if (e.key === "cricket_live_broadcast_state" && e.newValue) {
+        try {
+          const val = JSON.parse(e.newValue);
+          this.applySnapshotData(val);
+        } catch (err) {}
+      }
+    });
+
+    // 2) Firebase Cloud Realtime Database Initialization
+    const firebaseConfig = {
+      databaseURL: "https://cricket-strategy-2026-default-rtdb.firebaseio.com"
+    };
+
+    if (window.firebase && !window.firebase.apps.length) {
+      try {
+        window.firebase.initializeApp(firebaseConfig);
+        this.dbRef = window.firebase.database().ref("live_sync");
+        this.dbRef.on("value", (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            this.applySnapshotData(val);
+          }
+        });
+      } catch (err) {
+        console.warn("Firebase sync init fallback:", err);
+      }
+    }
+
+    // 3) Primary SSE Stream Listener
     try {
       this.eventSource = new EventSource(this.sseUrl);
       this.eventSource.onmessage = (event) => {
@@ -108,15 +147,15 @@ class CricketAnimator {
           }
         } catch (err) {}
       };
-    } catch (e) {
-      console.warn("SSE Realtime Stream initialized:", e);
-    }
+    } catch (e) {}
 
+    // Initial Cloud Fetch & Polling Fallback (1.0s)
+    this.fetchCloudState();
     setInterval(() => {
       if (!this.isDragging) {
         this.fetchCloudState();
       }
-    }, 1500);
+    }, 1000);
   }
 
   fetchCloudState() {
@@ -158,12 +197,14 @@ class CricketAnimator {
   applySnapshotData(val) {
     if (!val || typeof val !== "object") return;
     
-    // Strict Timestamp Check: Never revert local toggle if cloud message is older or equal!
-    if (val.updatedAt && val.updatedAt <= this.lastSyncTimestamp) {
-      return;
+    // Incremental Sync Version Check (Independent of Phone Clock Differences!)
+    if (val.syncVersion) {
+      if (this.lastSyncVersion && val.syncVersion <= this.lastSyncVersion) {
+        return;
+      }
+      this.lastSyncVersion = val.syncVersion;
     }
 
-    this.lastSyncTimestamp = val.updatedAt || Date.now();
     this.isRemoteUpdate = true;
 
     if (val.scenarios) {
@@ -187,18 +228,32 @@ class CricketAnimator {
   broadcastLiveState() {
     if (this.isRemoteUpdate || this.userRole === "viewer") return;
 
-    const now = Date.now();
-    this.lastSyncTimestamp = now;
+    this.syncVersion = (this.syncVersion || 0) + 1;
 
+    const payload = {
+      scenarios: this.scenarios,
+      currentKey: this.currentScenarioKey,
+      isLefty: this.isLefty,
+      syncVersion: this.syncVersion,
+      updatedAt: Date.now()
+    };
+
+    // 1) Local Broadcast (Tab-to-tab / window-to-window)
+    try {
+      if (this.bc) this.bc.postMessage(payload);
+      localStorage.setItem("cricket_live_broadcast_state", JSON.stringify(payload));
+    } catch (e) {}
+
+    // 2) Firebase Cloud Realtime Push
+    try {
+      if (this.dbRef) {
+        this.dbRef.set(payload);
+      }
+    } catch (e) {}
+
+    // 3) HTTP SSE Cloud Broadcast
     if (this.broadcastTimer) clearTimeout(this.broadcastTimer);
     this.broadcastTimer = setTimeout(() => {
-      const payload = {
-        scenarios: this.scenarios,
-        currentKey: this.currentScenarioKey,
-        isLefty: this.isLefty,
-        updatedAt: now
-      };
-
       fetch(this.pubUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -879,7 +934,6 @@ class CricketAnimator {
     if (leftyToggleBtn) {
       leftyToggleBtn.onclick = () => {
         this.isLefty = !this.isLefty;
-        this.lastSyncTimestamp = Date.now();
         this.updateStanceBtnUI();
         this.updateTargets();
         this.broadcastLiveState();
