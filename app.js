@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Pure Icon-Only Badge Header Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Ultra-Compact RHB/LHB Stance Switcher Engine (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -138,6 +138,23 @@ class CricketAnimator {
       .catch(() => {});
   }
 
+  updateStanceBtnUI() {
+    const leftyToggleBtn = document.getElementById("leftyToggleBtn");
+    const stanceText = document.getElementById("stanceText");
+    if (stanceText) {
+      stanceText.textContent = this.isLefty ? "LHB" : "RHB";
+    }
+    if (leftyToggleBtn) {
+      if (this.isLefty) {
+        leftyToggleBtn.classList.add("lhb-active");
+        leftyToggleBtn.title = "🏏 Batsman: Left Handed (LHB) - Tap to switch to RHB";
+      } else {
+        leftyToggleBtn.classList.remove("lhb-active");
+        leftyToggleBtn.title = "🏏 Batsman: Right Handed (RHB) - Tap to switch to LHB";
+      }
+    }
+  }
+
   applySnapshotData(val) {
     if (!val || typeof val !== "object") return;
     
@@ -159,8 +176,7 @@ class CricketAnimator {
 
     if (typeof val.isLefty === "boolean") {
       this.isLefty = val.isLefty;
-      const toggle = document.getElementById("leftyToggle");
-      if (toggle) toggle.checked = this.isLefty;
+      this.updateStanceBtnUI();
     }
 
     this.updateTargets();
@@ -305,6 +321,8 @@ class CricketAnimator {
       if (tabOptions) tabOptions.classList.add("active");
       if (tabFielders) tabFielders.classList.remove("active");
     }
+
+    this.updateStanceBtnUI();
   }
 
   loadScenariosFromStorage() {
@@ -751,6 +769,8 @@ class CricketAnimator {
         editableRoster.appendChild(row);
       });
     }
+
+    this.updateStanceBtnUI();
   }
 
   addPlayer(name) {
@@ -853,12 +873,13 @@ class CricketAnimator {
       };
     }
 
-    // Lefty Toggle Handler with Timestamp Lock (Prevents Auto-Off bug!)
-    const leftyToggle = document.getElementById("leftyToggle");
-    if (leftyToggle) {
-      leftyToggle.onchange = (e) => {
-        this.isLefty = e.target.checked;
-        this.lastSyncTimestamp = Date.now(); // Mark local action timestamp!
+    // Ultra-Compact Stance Switcher Pill Button (RHB / LHB)
+    const leftyToggleBtn = document.getElementById("leftyToggleBtn");
+    if (leftyToggleBtn) {
+      leftyToggleBtn.onclick = () => {
+        this.isLefty = !this.isLefty;
+        this.lastSyncTimestamp = Date.now();
+        this.updateStanceBtnUI();
         this.updateTargets();
         this.broadcastLiveState();
       };

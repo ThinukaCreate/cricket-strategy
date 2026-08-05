@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 
   <!-- Firebase Realtime Cloud Sync CDN -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -180,19 +180,16 @@
 
     </aside>
 
-    <!-- Right Stage: Unobscured Ground Canvas with Frozen Lefty Toggle Bar -->
+    <!-- Right Stage: Unobscured Ground Canvas with Frozen Compact Stance Switcher -->
     <section class="stage-section">
       <div class="canvas-card" id="canvasCard">
         
-        <!-- FROZEN FLOATING LEFTY TOGGLE BAR -->
+        <!-- FROZEN COMPACT BATSMAN STANCE SWITCHER PILL (RHB / LHB) -->
         <div class="frozen-lefty-bar">
-          <div class="lefty-bar-content">
-            <span>🏏 Lefty Batsman Rule</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="leftyToggle">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+          <button class="stance-toggle-btn" id="leftyToggleBtn" title="Tap to switch Righty (RHB) / Lefty (LHB) Batsman Stance">
+            <span>🏏</span>
+            <strong id="stanceText">RHB</strong>
+          </button>
         </div>
 
         <canvas id="fieldCanvas"></canvas>
@@ -202,6 +199,6 @@
   </main>
 
   <!-- Application Logic with cache-busting query parameter -->
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
