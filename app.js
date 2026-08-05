@@ -572,7 +572,7 @@ class CricketAnimator {
         role: p.role,
         pos: p.pos ? { ...p.pos } : { ...p.defaultPos },
         defaultPos: p.defaultPos ? { ...p.defaultPos } : { x: 0, y: 0 },
-        leftyPos: p.leftyPos ? { ...p.leftyPos } : undefined
+        leftyPos: p.leftyPos ? { ...p.leftyPos } : null
       };
     });
 
@@ -673,7 +673,7 @@ class CricketAnimator {
           role: p.role,
           pos: p.pos ? { ...p.pos } : { ...p.defaultPos },
           defaultPos: p.defaultPos ? { ...p.defaultPos } : { x: 0, y: 0 },
-          leftyPos: p.leftyPos ? { ...p.leftyPos } : undefined
+          leftyPos: p.leftyPos ? { ...p.leftyPos } : null
         };
       });
 
