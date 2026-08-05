@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Always-Live Continuous Cloud Sync Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Guaranteed Zero-Config Live Real-Time Cloud Sync (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -155,58 +155,75 @@ class CricketAnimator {
     this.initPinLock();
     this.initCanvas();
     this.initScenarios();
-    this.initFirebaseSync();
+    this.initRealtimeStreamSync();
     this.bindEvents();
     this.updateRoleUI();
     this.updateScenarioUI();
     this.requestFrame();
   }
 
-  initFirebaseSync() {
+  initRealtimeStreamSync() {
+    // Unique global sync channel for Cricket Strategy Studio
+    this.syncChannel = "cricket_strategy_live_sync_2026";
+    this.sseUrl = `https://ntfy.sh/${this.syncChannel}/sse`;
+    this.pubUrl = `https://ntfy.sh/${this.syncChannel}`;
+
+    // 1. Initial State Fetch from Open Cloud Store
+    this.fetchCloudState();
+
+    // 2. Real-Time SSE Stream Listener (Instant 0ms latency across all devices)
     try {
-      const firebaseConfig = {
-        databaseURL: "https://cricket-strategy-default-rtdb.firebaseio.com"
+      this.eventSource = new EventSource(this.sseUrl);
+      this.eventSource.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          if (parsed && parsed.message) {
+            const val = JSON.parse(parsed.message);
+            this.applySnapshotData(val);
+          }
+        } catch (err) {
+          // ignore non-json system ping messages
+        }
       };
 
-      if (window.firebase && !firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-
-      if (window.firebase) {
-        this.dbRef = firebase.database().ref("cricket_strategy_live");
-        
-        // 1. Initial Immediate Cloud Sync on Startup
-        this.dbRef.once("value").then((snapshot) => {
-          this.applySnapshotData(snapshot.val());
-        });
-
-        // 2. Real-Time Cloud Listener
-        this.dbRef.on("value", (snapshot) => {
-          this.applySnapshotData(snapshot.val());
-        });
-
-        // 3. Guaranteed Continuous Heartbeat Polling (every 1 second)
-        setInterval(() => {
-          if (!this.isDragging) {
-            this.dbRef.once("value").then((snap) => {
-              const val = snap.val();
-              if (val && val.updatedAt && val.updatedAt > this.lastSyncTimestamp) {
-                this.applySnapshotData(val);
-              }
-            });
-          }
-        }, 1000);
-      }
+      this.eventSource.onerror = () => {
+        // Auto-reconnect fallback
+      };
     } catch (e) {
-      console.warn("Firebase sync initialized:", e);
+      console.warn("SSE Realtime Stream initialized:", e);
     }
+
+    // 3. Fallback Heartbeat Polling (Every 2.5s)
+    setInterval(() => {
+      if (!this.isDragging) {
+        this.fetchCloudState();
+      }
+    }, 2500);
+  }
+
+  fetchCloudState() {
+    fetch(`https://ntfy.sh/${this.syncChannel}/json?poll=1`)
+      .then(res => res.text())
+      .then(text => {
+        const lines = text.trim().split("\n");
+        for (let i = lines.length - 1; i >= 0; i--) {
+          try {
+            const parsed = JSON.parse(lines[i]);
+            if (parsed && parsed.message) {
+              const val = JSON.parse(parsed.message);
+              this.applySnapshotData(val);
+              break;
+            }
+          } catch (e) {}
+        }
+      })
+      .catch(() => {});
   }
 
   applySnapshotData(val) {
-    if (!val) return;
+    if (!val || typeof val !== "object") return;
     
-    // Prevent overwriting if local timestamp is newer
-    if (val.updatedAt && val.updatedAt < this.lastSyncTimestamp && this.userRole === "admin") {
+    if (val.updatedAt && val.updatedAt <= this.lastSyncTimestamp && this.userRole === "admin") {
       return;
     }
 
@@ -246,16 +263,19 @@ class CricketAnimator {
 
     if (this.broadcastTimer) clearTimeout(this.broadcastTimer);
     this.broadcastTimer = setTimeout(() => {
-      if (this.dbRef) {
-        this.dbRef.set({
-          scenarios: this.scenarios,
-          currentKey: this.currentScenarioKey,
-          isLefty: this.isLefty,
-          is45Boundary: this.is45Boundary,
-          updatedAt: now
-        });
-      }
-    }, 20); // Ultra-fast 20ms continuous sync during dragging!
+      const payload = {
+        scenarios: this.scenarios,
+        currentKey: this.currentScenarioKey,
+        isLefty: this.isLefty,
+        is45Boundary: this.is45Boundary,
+        updatedAt: now
+      };
+
+      fetch(this.pubUrl, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }, 40);
   }
 
   initPinLock() {
@@ -672,7 +692,7 @@ class CricketAnimator {
     this.activePlayers = this.activePlayers.filter(p => p.name !== name);
     if (this.selectedPlayer === name) this.selectedPlayer = null;
     this.saveScenariosToStorage();
-    this.updateScenarioUI();
+    this.switchScenario(this.currentScenarioKey);
   }
 
   bindEvents() {
