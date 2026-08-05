@@ -1,4 +1,4 @@
-// 2D Cricket Field Strategy Animator - Triple-Redundant Realtime Cloud Sync Engine (PIN: 1996 Admin | 0000 Viewer)
+// 2D Cricket Field Strategy Animator - Universal Cloud Master State Synchronizer (PIN: 1996 Admin | 0000 Viewer)
 
 // Polyfill CanvasRenderingContext2D.prototype.roundRect for older Desktop & Mobile browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -115,7 +115,7 @@ class CricketAnimator {
       }
     });
 
-    // 2) Firebase Cloud Realtime Database Initialization
+    // 2) Firebase Cloud Realtime Database Initialization (Cloud Master State)
     const firebaseConfig = {
       databaseURL: "https://cricket-strategy-2026-default-rtdb.firebaseio.com"
     };
@@ -124,6 +124,16 @@ class CricketAnimator {
       try {
         window.firebase.initializeApp(firebaseConfig);
         this.dbRef = window.firebase.database().ref("live_sync");
+
+        // Immediately fetch Master State on startup across all browsers & devices!
+        this.dbRef.once("value", (snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            this.applySnapshotData(val, true);
+          }
+        });
+
+        // Listen for all live updates
         this.dbRef.on("value", (snapshot) => {
           const val = snapshot.val();
           if (val) {
@@ -194,21 +204,27 @@ class CricketAnimator {
     }
   }
 
-  applySnapshotData(val) {
+  applySnapshotData(val, forceInit = false) {
     if (!val || typeof val !== "object") return;
     
     // Incremental Sync Version Check (Independent of Phone Clock Differences!)
-    if (val.syncVersion) {
+    if (!forceInit && val.syncVersion) {
       if (this.lastSyncVersion && val.syncVersion <= this.lastSyncVersion) {
         return;
       }
+    }
+
+    if (val.syncVersion) {
       this.lastSyncVersion = val.syncVersion;
     }
 
     this.isRemoteUpdate = true;
 
-    if (val.scenarios) {
+    if (val.scenarios && typeof val.scenarios === "object") {
       this.scenarios = val.scenarios;
+      try {
+        localStorage.setItem("cricket_scenarios_v1", JSON.stringify(this.scenarios));
+      } catch (e) {}
     }
 
     if (val.currentKey && this.scenarios[val.currentKey]) {
