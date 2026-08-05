@@ -20,6 +20,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 const DEFAULT_SCENARIOS = {
   s1: {
     id: 1,
+    order: 1,
     title: "1) Scenario 1 - Power Play (Bowling Down)",
     phase: "Power Play",
     maxOutfield: 2,
@@ -230,7 +231,9 @@ class CricketAnimator {
     }
 
     if (val.currentKey && this.scenarios[val.currentKey]) {
-      this.currentScenarioKey = val.currentKey;
+      if (forceInit || !this.scenarios[this.currentScenarioKey]) {
+        this.currentScenarioKey = val.currentKey;
+      }
     }
 
     if (typeof val.isLefty === "boolean") {
@@ -576,8 +579,10 @@ class CricketAnimator {
       };
     });
 
+    const maxOrd = this.getMaxScenarioOrder();
     this.scenarios[newKey] = {
       id: newCount,
+      order: maxOrd + 1,
       title: `${newCount}) Scenario ${newCount}`,
       phase: currentSc.phase || "Power Play",
       maxOutfield: currentSc.maxOutfield || 2,
@@ -679,8 +684,11 @@ class CricketAnimator {
 
       const newCount = Object.keys(this.scenarios).length + 1;
 
+      const maxOrd = this.getMaxScenarioOrder();
+
       const newSc = {
         id: newCount,
+        order: maxOrd + 1,
         title: title ? `${newCount}) ${title}` : `${newCount}) Scenario ${newCount}`,
         phase: phase,
         maxOutfield: maxOutfield,
@@ -755,32 +763,107 @@ class CricketAnimator {
     });
   }
 
+  getMaxScenarioOrder() {
+    let max = 0;
+    if (!this.scenarios) return max;
+    Object.values(this.scenarios).forEach(sc => {
+      const ord = (typeof sc.order === "number") ? sc.order : (sc.id || 0);
+      if (ord > max) max = ord;
+    });
+    return max;
+  }
+
+  moveScenario(key, direction) {
+    if (this.userRole === "viewer" || !this.scenarios[key]) return;
+
+    const keys = Object.keys(this.scenarios).sort((a, b) => {
+      const orderA = typeof this.scenarios[a].order === "number" ? this.scenarios[a].order : (this.scenarios[a].id || 0);
+      const orderB = typeof this.scenarios[b].order === "number" ? this.scenarios[b].order : (this.scenarios[b].id || 0);
+      return orderA - orderB;
+    });
+
+    keys.forEach((k, idx) => {
+      this.scenarios[k].order = idx + 1;
+    });
+
+    const index = keys.indexOf(key);
+    if (index === -1) return;
+
+    let targetIndex = -1;
+    if (direction === "up" && index > 0) {
+      targetIndex = index - 1;
+    } else if (direction === "down" && index < keys.length - 1) {
+      targetIndex = index + 1;
+    }
+
+    if (targetIndex !== -1) {
+      const otherKey = keys[targetIndex];
+      const temp = this.scenarios[key].order;
+      this.scenarios[key].order = this.scenarios[otherKey].order;
+      this.scenarios[otherKey].order = temp;
+
+      this.saveScenariosToStorage();
+      this.updateScenarioUI();
+      this.broadcastLiveState();
+    }
+  }
+
   updateScenarioUI() {
     const sc = this.scenarios[this.currentScenarioKey] || Object.values(this.scenarios)[0];
     const isAdmin = (this.userRole === "admin");
     
+    // Sort scenario keys based on order property
+    const sortedKeys = Object.keys(this.scenarios).sort((a, b) => {
+      const orderA = typeof this.scenarios[a].order === "number" ? this.scenarios[a].order : (this.scenarios[a].id || 0);
+      const orderB = typeof this.scenarios[b].order === "number" ? this.scenarios[b].order : (this.scenarios[b].id || 0);
+      return orderA - orderB;
+    });
+
+    // Normalize order properties
+    sortedKeys.forEach((k, idx) => {
+      if (typeof this.scenarios[k].order !== "number") {
+        this.scenarios[k].order = idx + 1;
+      }
+    });
+
     const gridContainer = document.getElementById("scenarioGrid");
     if (gridContainer) {
       gridContainer.innerHTML = "";
-      Object.keys(this.scenarios).forEach(key => {
+      sortedKeys.forEach((key, index) => {
         const item = this.scenarios[key];
         const btn = document.createElement("div");
         btn.className = `sc-btn ${key === this.currentScenarioKey ? 'active' : ''}`;
         btn.style.display = "flex";
         btn.style.alignItems = "center";
         btn.style.justifyContent = "space-between";
+        btn.style.gap = "0.4rem";
+
+        const isFirst = (index === 0);
+        const isLast = (index === sortedKeys.length - 1);
         
         btn.innerHTML = `
-          <span style="white-space:normal; word-break:break-word; flex:1; padding-right:0.4rem;">${item.title}</span>
+          <span style="white-space:normal; word-break:break-word; flex:1; padding-right:0.2rem;">${item.title}</span>
           ${isAdmin ? `
-            <div style="display:flex; gap:0.2rem; align-items:center;">
+            <div style="display:flex; gap:0.2rem; align-items:center; flex-shrink:0;">
+              ${!isFirst ? `<button class="btn-icon-small" data-moveup="${key}" title="Move Up" style="font-size:0.75rem;">⬆️</button>` : ''}
+              ${!isLast ? `<button class="btn-icon-small" data-movedown="${key}" title="Move Down" style="font-size:0.75rem;">⬇️</button>` : ''}
               <button class="btn-icon-small" data-edit="${key}" title="Edit Scenario Settings" style="color:var(--accent-sky); font-size:0.75rem;">⚙️ Edit</button>
-              ${Object.keys(this.scenarios).length > 1 ? `<button class="btn-icon-small" data-del="${key}" title="Delete Scenario" style="color:#fb7185; font-size:0.75rem;">🗑️</button>` : ''}
+              ${sortedKeys.length > 1 ? `<button class="btn-icon-small" data-del="${key}" title="Delete Scenario" style="color:#fb7185; font-size:0.75rem;">🗑️</button>` : ''}
             </div>
           ` : ''}
         `;
 
         btn.onclick = (e) => {
+          if (e.target.dataset.moveup) {
+            e.stopPropagation();
+            this.moveScenario(key, "up");
+            return;
+          }
+          if (e.target.dataset.movedown) {
+            e.stopPropagation();
+            this.moveScenario(key, "down");
+            return;
+          }
           if (e.target.dataset.edit) {
             e.stopPropagation();
             this.openScenarioEditor(key);
@@ -1200,9 +1283,7 @@ class CricketAnimator {
       const leftSideColor = isOffSideOnRight ? "#fbbf24" : "#38bdf8";
       const rightSideColor = isOffSideOnRight ? "#38bdf8" : "#fbbf24";
 
-      // Dynamic Side Header Banners
-      this.drawSideBanner(-200, -265, leftSideLabel, leftSideColor);
-      this.drawSideBanner(200, -265, rightSideLabel, rightSideColor);
+      // Outer Side Header Banners removed as requested to keep ground canvas clean
 
       // ELEGANT VERTICAL GRASS TURF WATERMARKS ("OFF SIDE" and "LEG SIDE")
       ctx.save();
